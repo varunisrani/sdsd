@@ -1269,13 +1269,13 @@ export function AnalysisDashboard({ className = '' }: AnalysisDashboardProps) {
                     </div>
                   )}
 
-                  {/* Development Testing - Only show in development */}
-                  {process.env.NODE_ENV === 'development' && !kitsuStatus.connected && (
+                  {/* Development Testing - Available in all environments for testing */}
+                  {!kitsuStatus.connected && (
                     <div className="mt-4 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
                       <div className="flex items-center justify-between">
                         <div>
-                          <p className="text-sm font-medium text-yellow-800">Development Testing</p>
-                          <p className="text-xs text-yellow-600">Simulate receiving data from Kitsu</p>
+                          <p className="text-sm font-medium text-yellow-800">Kitsu Connection Testing</p>
+                          <p className="text-xs text-yellow-600">Simulate receiving data from Kitsu for testing purposes</p>
                         </div>
                         <button
                           onClick={() => {
