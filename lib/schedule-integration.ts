@@ -442,7 +442,7 @@ Camera Setups Needed: ${shotsData?.data?.equipment?.cameras?.length || 0} config
 Special Equipment: ${shotsData?.data?.equipment?.specialEquipment?.join(', ') || 'Standard gear'}
 Lens Requirements: ${shotsData?.data?.equipment?.lenses?.join(', ') || 'Standard lenses'}
 High-Complexity Shots by Location: ${JSON.stringify(
-  convertedScenes.reduce((acc, scene) => {
+  convertedScenes.reduce((acc: any, scene) => {
     const complexShots = shotsData?.data?.shots?.filter(shot => 
       shot.sceneNumber === parseInt(scene.sceneNumber) && shot.complexity === 'HIGH'
     ).length || 0;
@@ -453,7 +453,7 @@ High-Complexity Shots by Location: ${JSON.stringify(
 
 ${sequenceData ? `**SEQUENCE LOCATION MAPPING:**
 Sequences by Location: ${JSON.stringify(
-  sequenceData?.data?.sequences?.reduce((acc, seq) => {
+  sequenceData?.data?.sequences?.reduce((acc: any, seq) => {
     if (!acc[seq.location]) acc[seq.location] = [];
     acc[seq.location].push(seq.name);
     return acc;
