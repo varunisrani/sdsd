@@ -64,7 +64,15 @@ export function AnalysisDashboard({ className = '' }: AnalysisDashboardProps) {
   const [dataSource, setDataSource] = useState<DataSource>('file');
   const [kitsuStatus, setKitsuStatus] = useState<KitsuConnectionStatus>({
     connected: false,
-    availableData: { scriptBreakdown: false, assets: false, aiShots: false },
+    availableData: { 
+      scriptBreakdown: false, 
+      assets: false, 
+      aiShots: false,
+      shotsData: false,
+      sequenceData: false,
+      scheduleAnalysis: false,
+      scriptAnalysis: false
+    },
     errors: []
   });
   const [kitsuData, setKitsuData] = useState<ParsedKitsuData | null>(null);
@@ -78,6 +86,8 @@ export function AnalysisDashboard({ className = '' }: AnalysisDashboardProps) {
 
     // Load stored shots and sequence data
     const loadStoredData = () => {
+      if (typeof window === 'undefined') return;
+      
       try {
         const storedShots = localStorage.getItem('currentShots');
         if (storedShots) {
@@ -352,7 +362,7 @@ export function AnalysisDashboard({ className = '' }: AnalysisDashboardProps) {
       }
 
       console.log('Loading script breakdown from Kitsu:', scriptData);
-      setCurrentScript(scriptData);
+      setCurrentScript(scriptData as any);
       setDataSource('kitsu');
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load script breakdown from Kitsu');
@@ -468,7 +478,7 @@ export function AnalysisDashboard({ className = '' }: AnalysisDashboardProps) {
 
     // Load available data from Kitsu
     if (kitsuData.scriptBreakdown) {
-      setCurrentScript(kitsuData.scriptBreakdown);
+      setCurrentScript(kitsuData.scriptBreakdown as any);
     }
     if (kitsuData.assets) {
       setCurrentAssets(kitsuData.assets);
@@ -492,6 +502,8 @@ export function AnalysisDashboard({ className = '' }: AnalysisDashboardProps) {
 
   // KK localStorage integration for Budget Analysis
   const handleLoadLocalScriptAnalysis = () => {
+    if (typeof window === 'undefined') return;
+    
     try {
       setError(null);
       const storedData = localStorage.getItem('currentScriptAnalysis');
@@ -510,6 +522,8 @@ export function AnalysisDashboard({ className = '' }: AnalysisDashboardProps) {
   };
 
   const handleLoadLocalScheduleAnalysis = () => {
+    if (typeof window === 'undefined') return;
+    
     try {
       setError(null);
       const storedData = localStorage.getItem('currentScheduleAnalysis');
@@ -528,6 +542,8 @@ export function AnalysisDashboard({ className = '' }: AnalysisDashboardProps) {
   };
 
   const handleUseLocalAnalysisData = () => {
+    if (typeof window === 'undefined') return;
+    
     let loadedCount = 0;
     
     // Try to load script analysis
@@ -1391,28 +1407,28 @@ export function AnalysisDashboard({ className = '' }: AnalysisDashboardProps) {
                         <div className="text-xs font-medium text-gray-600 mb-2">Available in Browser Storage:</div>
                         <div className="grid grid-cols-2 gap-2 text-xs">
                           <div className={`flex items-center ${
-                            localStorage.getItem('currentScriptAnalysis') 
+                            currentScriptAnalysis 
                               ? 'text-green-700' 
                               : 'text-gray-500'
                           }`}>
                             <div className={`w-2 h-2 rounded-full mr-2 ${
-                              localStorage.getItem('currentScriptAnalysis') 
+                              currentScriptAnalysis 
                                 ? 'bg-green-500' 
                                 : 'bg-gray-300'
                             }`}></div>
-                            Script Analysis {localStorage.getItem('currentScriptAnalysis') ? '✓' : '✗'}
+                            Script Analysis {currentScriptAnalysis ? '✓' : '✗'}
                           </div>
                           <div className={`flex items-center ${
-                            localStorage.getItem('currentScheduleAnalysis') 
+                            currentScheduleAnalysis 
                               ? 'text-green-700' 
                               : 'text-gray-500'
                           }`}>
                             <div className={`w-2 h-2 rounded-full mr-2 ${
-                              localStorage.getItem('currentScheduleAnalysis') 
+                              currentScheduleAnalysis 
                                 ? 'bg-green-500' 
                                 : 'bg-gray-300'
                             }`}></div>
-                            Schedule Analysis {localStorage.getItem('currentScheduleAnalysis') ? '✓' : '✗'}
+                            Schedule Analysis {currentScheduleAnalysis ? '✓' : '✗'}
                           </div>
                         </div>
                       </div>
