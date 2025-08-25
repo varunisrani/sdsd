@@ -906,7 +906,7 @@ export class ScriptDataUtils {
     timeOfDays: string[];
     estimatedDuration: string;
   } {
-    const scenes = scriptData.data.scenes;
+    const scenes = scriptData?.data?.scenes || [];
     const locations = [...new Set(scenes.map(s => s.location).filter(Boolean))];
     const characters = [...new Set(scenes.flatMap(s => s.Scene_Characters || []))];
     const timeOfDays = [...new Set(scenes.map(s => s.timeOfDay).filter(Boolean))];

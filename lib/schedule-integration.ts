@@ -1021,7 +1021,7 @@ export class ScriptDataUtils {
     estimatedShootingDays: number;
     complexityScore: number;
   } {
-    const scenes = scriptData?.data?.scenes;
+    const scenes = scriptData?.data?.scenes || [];
     const locations = [...new Set(scenes.map(s => s.location).filter(Boolean))] as string[];
     const characters = [...new Set(scenes.flatMap(s => s.Scene_Characters || []))] as string[];
     const timeOfDays = [...new Set(scenes.map(s => s.timeOfDay).filter(Boolean))] as string[];

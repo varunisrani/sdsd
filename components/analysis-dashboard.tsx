@@ -29,8 +29,10 @@ import { BudgetAnalysisService, ScriptDataUtils as BudgetUtils, BudgetAnalysisRe
 import { ScriptAnalysisService, ScriptDataUtils, ScriptAnalysisResult, AssetsData, DEFAULT_SCRIPT_CONFIG } from '../lib/script-integration';
 import { ScheduleAnalysisService, ScriptDataUtils as ScheduleUtils, ScheduleAnalysisResult, ShotsData, SequenceData, DEFAULT_SCHEDULE_CONFIG } from '../lib/schedule-integration';
 import { AnalysisStorageService, StoredAnalysis } from '../lib/storage-service';
+import { getKitsuIntegration, KitsuConnectionStatus, ParsedKitsuData } from '../lib/kitsu-integration';
 
 type AnalysisType = 'budget' | 'script' | 'schedule';
+type DataSource = 'file' | 'kitsu';
 
 
 interface AnalysisDashboardProps {
@@ -57,6 +59,15 @@ export function AnalysisDashboard({ className = '' }: AnalysisDashboardProps) {
   const [error, setError] = useState<string | null>(null);
   const [storedAnalyses, setStoredAnalyses] = useState<StoredAnalysis[]>([]);
   const [showStoragePanel, setShowStoragePanel] = useState(false);
+  
+  // Kitsu integration state
+  const [dataSource, setDataSource] = useState<DataSource>('file');
+  const [kitsuStatus, setKitsuStatus] = useState<KitsuConnectionStatus>({
+    connected: false,
+    availableData: { scriptBreakdown: false, assets: false, aiShots: false },
+    errors: []
+  });
+  const [kitsuData, setKitsuData] = useState<ParsedKitsuData | null>(null);
 
   // Load stored analyses on component mount
   useEffect(() => {
@@ -112,6 +123,39 @@ export function AnalysisDashboard({ className = '' }: AnalysisDashboardProps) {
 
     window.addEventListener('storage', handleStorageChange);
     return () => window.removeEventListener('storage', handleStorageChange);
+  }, []);
+
+  // Initialize Kitsu integration
+  useEffect(() => {
+    const kitsuIntegration = getKitsuIntegration();
+    
+    // Set up data listener
+    const unsubscribeData = kitsuIntegration.onDataReceived((data) => {
+      console.log('📨 Received Kitsu data:', data);
+      setKitsuData(data);
+      
+      // Auto-select Kitsu as data source if it's available
+      if (data && (data.scriptBreakdown || data.assets)) {
+        setDataSource('kitsu');
+      }
+    });
+
+    // Set up status listener
+    const unsubscribeStatus = kitsuIntegration.onStatusChanged((status) => {
+      console.log('🔗 Kitsu status changed:', status);
+      setKitsuStatus(status);
+    });
+
+    // Check if we're in Kitsu iframe and auto-detect data
+    if (kitsuIntegration.isInKitsuIframe()) {
+      console.log('🖼️ Running in Kitsu iframe - setting up integration');
+      setDataSource('kitsu');
+    }
+
+    return () => {
+      unsubscribeData();
+      unsubscribeStatus();
+    };
   }, []);
 
 
@@ -293,6 +337,228 @@ export function AnalysisDashboard({ className = '' }: AnalysisDashboardProps) {
       console.error('Failed to load schedule analysis file:', err);
       setError(err instanceof Error ? err.message : 'Failed to load schedule analysis file');
     }
+  };
+
+  // Kitsu data loading functions
+  const handleLoadKitsuScriptBreakdown = () => {
+    try {
+      setError(null);
+      const kitsuIntegration = getKitsuIntegration();
+      const scriptData = kitsuIntegration.getScriptBreakdownForAnalysis();
+      
+      if (!scriptData) {
+        setError('No script breakdown data available from Kitsu');
+        return;
+      }
+
+      console.log('Loading script breakdown from Kitsu:', scriptData);
+      setCurrentScript(scriptData);
+      setDataSource('kitsu');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to load script breakdown from Kitsu');
+    }
+  };
+
+  const handleLoadKitsuAssets = () => {
+    try {
+      setError(null);
+      const kitsuIntegration = getKitsuIntegration();
+      const assetsData = kitsuIntegration.getAssetsForAnalysis();
+      
+      if (!assetsData) {
+        setError('No assets data available from Kitsu');
+        return;
+      }
+
+      console.log('Loading assets data from Kitsu:', assetsData);
+      setCurrentAssets(assetsData);
+      setDataSource('kitsu');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to load assets data from Kitsu');
+    }
+  };
+
+  const handleRefreshKitsuData = () => {
+    const kitsuIntegration = getKitsuIntegration();
+    kitsuIntegration.refreshData();
+    console.log('🔄 Refreshing Kitsu data...');
+  };
+
+  const handleLoadKitsuShots = () => {
+    try {
+      setError(null);
+      const kitsuIntegration = getKitsuIntegration();
+      const shotsData = kitsuIntegration.getShotsDataForAnalysis();
+      
+      if (!shotsData) {
+        setError('No shots data available from Kitsu');
+        return;
+      }
+
+      console.log('Loading shots data from Kitsu:', shotsData);
+      setCurrentShots(shotsData);
+      setDataSource('kitsu');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to load shots data from Kitsu');
+    }
+  };
+
+  const handleLoadKitsuSequence = () => {
+    try {
+      setError(null);
+      const kitsuIntegration = getKitsuIntegration();
+      const sequenceData = kitsuIntegration.getSequenceDataForAnalysis();
+      
+      if (!sequenceData) {
+        setError('No sequence data available from Kitsu');
+        return;
+      }
+
+      console.log('Loading sequence data from Kitsu:', sequenceData);
+      setCurrentSequence(sequenceData);
+      setDataSource('kitsu');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to load sequence data from Kitsu');
+    }
+  };
+
+  const handleLoadKitsuScheduleAnalysis = () => {
+    try {
+      setError(null);
+      const kitsuIntegration = getKitsuIntegration();
+      const scheduleAnalysis = kitsuIntegration.getScheduleAnalysis();
+      
+      if (!scheduleAnalysis) {
+        setError('No schedule analysis available from Kitsu');
+        return;
+      }
+
+      console.log('Loading schedule analysis from Kitsu:', scheduleAnalysis);
+      setCurrentScheduleAnalysis(scheduleAnalysis);
+      setDataSource('kitsu');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to load schedule analysis from Kitsu');
+    }
+  };
+
+  const handleLoadKitsuScriptAnalysis = () => {
+    try {
+      setError(null);
+      const kitsuIntegration = getKitsuIntegration();
+      const scriptAnalysis = kitsuIntegration.getScriptAnalysis();
+      
+      if (!scriptAnalysis) {
+        setError('No script analysis available from Kitsu');
+        return;
+      }
+
+      console.log('Loading script analysis from Kitsu:', scriptAnalysis);
+      setCurrentScriptAnalysis(scriptAnalysis);
+      setDataSource('kitsu');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to load script analysis from Kitsu');
+    }
+  };
+
+  const handleUseKitsuData = () => {
+    if (!kitsuData) {
+      setError('No Kitsu data available');
+      return;
+    }
+
+    // Load available data from Kitsu
+    if (kitsuData.scriptBreakdown) {
+      setCurrentScript(kitsuData.scriptBreakdown);
+    }
+    if (kitsuData.assets) {
+      setCurrentAssets(kitsuData.assets);
+    }
+    if (kitsuData.shotsData) {
+      setCurrentShots(kitsuData.shotsData);
+    }
+    if (kitsuData.sequenceData) {
+      setCurrentSequence(kitsuData.sequenceData);
+    }
+    if (kitsuData.scheduleAnalysis) {
+      setCurrentScheduleAnalysis(kitsuData.scheduleAnalysis);
+    }
+    if (kitsuData.scriptAnalysis) {
+      setCurrentScriptAnalysis(kitsuData.scriptAnalysis);
+    }
+    
+    setDataSource('kitsu');
+    console.log('✅ Using Kitsu data as primary source');
+  };
+
+  // KK localStorage integration for Budget Analysis
+  const handleLoadLocalScriptAnalysis = () => {
+    try {
+      setError(null);
+      const storedData = localStorage.getItem('currentScriptAnalysis');
+      if (!storedData) {
+        setError('No local script analysis found. Please run script analysis first.');
+        return;
+      }
+
+      const scriptAnalysisData = JSON.parse(storedData);
+      console.log('Loading local script analysis:', scriptAnalysisData);
+      setCurrentScriptAnalysis(scriptAnalysisData);
+      // Don't set dataSource for budget analysis - it doesn't use the source selection
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to load local script analysis');
+    }
+  };
+
+  const handleLoadLocalScheduleAnalysis = () => {
+    try {
+      setError(null);
+      const storedData = localStorage.getItem('currentScheduleAnalysis');
+      if (!storedData) {
+        setError('No local schedule analysis found. Please run schedule analysis first.');
+        return;
+      }
+
+      const scheduleAnalysisData = JSON.parse(storedData);
+      console.log('Loading local schedule analysis:', scheduleAnalysisData);
+      setCurrentScheduleAnalysis(scheduleAnalysisData);
+      // Don't set dataSource for budget analysis - it doesn't use the source selection
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to load local schedule analysis');
+    }
+  };
+
+  const handleUseLocalAnalysisData = () => {
+    let loadedCount = 0;
+    
+    // Try to load script analysis
+    try {
+      const scriptData = localStorage.getItem('currentScriptAnalysis');
+      if (scriptData) {
+        setCurrentScriptAnalysis(JSON.parse(scriptData));
+        loadedCount++;
+      }
+    } catch (err) {
+      console.warn('Failed to load local script analysis:', err);
+    }
+
+    // Try to load schedule analysis
+    try {
+      const scheduleData = localStorage.getItem('currentScheduleAnalysis');
+      if (scheduleData) {
+        setCurrentScheduleAnalysis(JSON.parse(scheduleData));
+        loadedCount++;
+      }
+    } catch (err) {
+      console.warn('Failed to load local schedule analysis:', err);
+    }
+
+    if (loadedCount === 0) {
+      setError('No local analysis data found. Please run script and schedule analysis first.');
+      return;
+    }
+
+    // Don't set dataSource for budget analysis - it doesn't use the source selection
+    console.log(`✅ Loaded ${loadedCount} local analysis datasets for budget analysis`);
   };
 
   // Storage management functions
@@ -785,16 +1051,311 @@ export function AnalysisDashboard({ className = '' }: AnalysisDashboardProps) {
           <div className="lg:col-span-1">
             <div className="bg-white rounded-lg shadow">
               <div className="px-6 py-4 border-b border-gray-200">
-                <h3 className="text-lg font-medium text-gray-900">Script Management</h3>
-                <p className="text-sm text-gray-500">Load and manage your script files for {analysisType} analysis</p>
+                <h3 className="text-lg font-medium text-gray-900">
+                  {analysisType === 'budget' ? 'Data Management' : 'Script Management'}
+                </h3>
+                <p className="text-sm text-gray-500">
+                  {analysisType === 'budget' 
+                    ? 'Load analysis results for budget calculation'
+                    : `Load and manage your script files for ${analysisType} analysis`
+                  }
+                </p>
               </div>
               
-              <div className="p-6 space-y-4">
-                {/* Script File Upload - Only for Script Analysis */}
-                {analysisType === 'script' && (
+              <div className="p-6 space-y-6">
+                {/* Data Source Selection - Only for Script and Schedule Analysis */}
+                {analysisType !== 'budget' && (
+                  <div className="border-b border-gray-200 pb-4">
+                    <label className="block text-sm font-medium text-gray-700 mb-3">Data Source</label>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {/* File Upload Option */}
+                    <div 
+                      className={`relative cursor-pointer rounded-lg p-4 border-2 transition-all ${
+                        dataSource === 'file' 
+                          ? 'border-blue-500 bg-blue-50' 
+                          : 'border-gray-300 hover:border-gray-400'
+                      }`}
+                      onClick={() => setDataSource('file')}
+                    >
+                      <div className="flex items-center">
+                        <input
+                          type="radio"
+                          name="dataSource"
+                          value="file"
+                          checked={dataSource === 'file'}
+                          onChange={() => setDataSource('file')}
+                          className="h-4 w-4 text-blue-600 border-gray-300 focus:ring-blue-500"
+                        />
+                        <div className="ml-3 flex items-center">
+                          <Upload className="w-5 h-5 text-gray-600 mr-2" />
+                          <div>
+                            <p className="text-sm font-medium text-gray-900">Upload Files</p>
+                            <p className="text-xs text-gray-500">Upload SSD.json or other files</p>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Kitsu Data Option */}
+                    <div 
+                      className={`relative cursor-pointer rounded-lg p-4 border-2 transition-all ${
+                        dataSource === 'kitsu' 
+                          ? 'border-green-500 bg-green-50' 
+                          : kitsuStatus.connected
+                            ? 'border-green-300 hover:border-green-400' 
+                            : 'border-gray-200 bg-gray-50 cursor-not-allowed'
+                      }`}
+                      onClick={() => kitsuStatus.connected && setDataSource('kitsu')}
+                    >
+                      <div className="flex items-center">
+                        <input
+                          type="radio"
+                          name="dataSource"
+                          value="kitsu"
+                          checked={dataSource === 'kitsu'}
+                          disabled={!kitsuStatus.connected}
+                          onChange={() => setDataSource('kitsu')}
+                          className="h-4 w-4 text-green-600 border-gray-300 focus:ring-green-500 disabled:opacity-50"
+                        />
+                        <div className="ml-3 flex items-center">
+                          <Database className="w-5 h-5 text-green-600 mr-2" />
+                          <div>
+                            <p className="text-sm font-medium text-gray-900">Kitsu Data</p>
+                            <p className={`text-xs ${kitsuStatus.connected ? 'text-green-600' : 'text-gray-400'}`}>
+                              {kitsuStatus.connected ? '✓ Connected' : 'Not connected'}
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                      {kitsuStatus.connected && (
+                        <div className="mt-2 text-xs text-gray-600">
+                          Available: {kitsuStatus.availableData.scriptBreakdown ? '📄 Script' : ''} 
+                          {kitsuStatus.availableData.assets ? ' 🎬 Assets' : ''}
+                          {kitsuStatus.availableData.aiShots ? ' 🎥 AI-Shots' : ''}
+                          {kitsuStatus.availableData.shotsData ? ' 📹 Shots' : ''}
+                          {kitsuStatus.availableData.sequenceData ? ' 🎞️ Sequences' : ''}
+                          {kitsuStatus.availableData.scheduleAnalysis ? ' 📅 Schedule-Analysis' : ''}
+                          {kitsuStatus.availableData.scriptAnalysis ? ' 📊 Script-Analysis' : ''}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Kitsu Connection Status & Actions */}
+                  {dataSource === 'kitsu' && (
+                    <div className="mt-4 p-4 bg-gray-50 rounded-lg">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center">
+                          <div className={`w-3 h-3 rounded-full mr-2 ${
+                            kitsuStatus.connected ? 'bg-green-500' : 'bg-red-500'
+                          }`}></div>
+                          <span className="text-sm font-medium text-gray-700">
+                            Kitsu Status: {kitsuStatus.connected ? 'Connected' : 'Disconnected'}
+                          </span>
+                          {kitsuStatus.lastUpdate && (
+                            <span className="ml-2 text-xs text-gray-500">
+                              (Last updated: {new Date(kitsuStatus.lastUpdate).toLocaleTimeString()})
+                            </span>
+                          )}
+                        </div>
+                        <button
+                          onClick={handleRefreshKitsuData}
+                          className="text-sm bg-blue-500 text-white px-3 py-1 rounded hover:bg-blue-600 flex items-center"
+                        >
+                          <RefreshCw className="w-4 h-4 mr-1" />
+                          Refresh
+                        </button>
+                      </div>
+                      
+                      {kitsuStatus.errors.length > 0 && (
+                        <div className="mt-2 text-sm text-red-600">
+                          Errors: {kitsuStatus.errors.join(', ')}
+                        </div>
+                      )}
+
+                      {kitsuData && (
+                        <div className="mt-3 space-y-3">
+                          {/* Primary Data Buttons */}
+                          <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
+                            {kitsuData.scriptBreakdown && (
+                              <button
+                                onClick={handleLoadKitsuScriptBreakdown}
+                                className="text-sm bg-green-500 text-white px-3 py-2 rounded hover:bg-green-600 flex items-center justify-center"
+                              >
+                                <FileText className="w-4 h-4 mr-1" />
+                                Use Script Data
+                              </button>
+                            )}
+                            {kitsuData.assets && (
+                              <button
+                                onClick={handleLoadKitsuAssets}
+                                className="text-sm bg-purple-500 text-white px-3 py-2 rounded hover:bg-purple-600 flex items-center justify-center"
+                              >
+                                <Package className="w-4 h-4 mr-1" />
+                                Use Assets Data
+                              </button>
+                            )}
+                            <button
+                              onClick={handleUseKitsuData}
+                              className="text-sm bg-blue-500 text-white px-3 py-2 rounded hover:bg-blue-600 flex items-center justify-center"
+                            >
+                              <CheckCircle className="w-4 h-4 mr-1" />
+                              Use All Data
+                            </button>
+                          </div>
+                          
+                          {/* Schedule Data Buttons */}
+                          {(kitsuData.shotsData || kitsuData.sequenceData || kitsuData.scheduleAnalysis || kitsuData.scriptAnalysis) && (
+                            <div className="border-t pt-3">
+                              <div className="text-xs font-medium text-gray-600 mb-2">Schedule & Analysis Data:</div>
+                              <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+                                {kitsuData.shotsData && (
+                                  <button
+                                    onClick={handleLoadKitsuShots}
+                                    className="text-xs bg-orange-500 text-white px-2 py-2 rounded hover:bg-orange-600 flex items-center justify-center"
+                                  >
+                                    <Film className="w-3 h-3 mr-1" />
+                                    Shots
+                                  </button>
+                                )}
+                                {kitsuData.sequenceData && (
+                                  <button
+                                    onClick={handleLoadKitsuSequence}
+                                    className="text-xs bg-indigo-500 text-white px-2 py-2 rounded hover:bg-indigo-600 flex items-center justify-center"
+                                  >
+                                    <Calendar className="w-3 h-3 mr-1" />
+                                    Sequences
+                                  </button>
+                                )}
+                                {kitsuData.scheduleAnalysis && (
+                                  <button
+                                    onClick={handleLoadKitsuScheduleAnalysis}
+                                    className="text-xs bg-teal-500 text-white px-2 py-2 rounded hover:bg-teal-600 flex items-center justify-center"
+                                  >
+                                    <Clock className="w-3 h-3 mr-1" />
+                                    Schedule
+                                  </button>
+                                )}
+                                {kitsuData.scriptAnalysis && (
+                                  <button
+                                    onClick={handleLoadKitsuScriptAnalysis}
+                                    className="text-xs bg-pink-500 text-white px-2 py-2 rounded hover:bg-pink-600 flex items-center justify-center"
+                                  >
+                                    <BarChart3 className="w-3 h-3 mr-1" />
+                                    Script Analysis
+                                  </button>
+                                )}
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Development Testing - Only show in development */}
+                  {process.env.NODE_ENV === 'development' && !kitsuStatus.connected && (
+                    <div className="mt-4 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <p className="text-sm font-medium text-yellow-800">Development Testing</p>
+                          <p className="text-xs text-yellow-600">Simulate receiving data from Kitsu</p>
+                        </div>
+                        <button
+                          onClick={() => {
+                            // Simulate Kitsu PostMessage
+                            window.dispatchEvent(new MessageEvent('message', {
+                              origin: 'http://localhost:3001',
+                              data: {
+                                type: 'KITSU_LOCALSTORAGE_DATA',
+                                data: {
+                                  scriptBreakdown: JSON.stringify({
+                                    success: true,
+                                    data: {
+                                      scriptName: 'Test Script from Kitsu',
+                                      genre: 'Action',
+                                      totalScenes: 25,
+                                      characters: ['HERO', 'VILLAIN'],
+                                      locations: ['OFFICE', 'WAREHOUSE'],
+                                      props: ['GUN', 'LAPTOP'],
+                                      vehicles: ['CAR', 'MOTORCYCLE']
+                                    }
+                                  }),
+                                  assets: JSON.stringify({
+                                    success: true,
+                                    data: {
+                                      projectName: 'Test Project from Kitsu',
+                                      totalAssets: 15,
+                                      categories: {
+                                        cast: [{ name: 'John Doe', category: 'Actor' }],
+                                        props: [{ name: 'Gun Prop', category: 'Weapon' }],
+                                        locations: [{ name: 'Office Set', category: 'Interior' }]
+                                      }
+                                    }
+                                  }),
+                                  shotsData: JSON.stringify({
+                                    success: true,
+                                    data: {
+                                      projectName: 'Test Shots from Kitsu',
+                                      totalShots: 50,
+                                      sequences: ['ACT_1', 'ACT_2', 'ACT_3'],
+                                      shots: [
+                                        { name: 'Shot_001', sequence: 'ACT_1', duration: '5s' },
+                                        { name: 'Shot_002', sequence: 'ACT_1', duration: '3s' }
+                                      ]
+                                    }
+                                  }),
+                                  sequenceData: JSON.stringify({
+                                    success: true,
+                                    data: {
+                                      projectName: 'Test Sequences from Kitsu',
+                                      totalSequences: 10,
+                                      sequences: [
+                                        { name: 'ACT_1', duration: '15min', shots: 20 },
+                                        { name: 'ACT_2', duration: '20min', shots: 25 }
+                                      ]
+                                    }
+                                  }),
+                                  scheduleAnalysis: JSON.stringify({
+                                    exportTimestamp: new Date().toISOString(),
+                                    exportType: 'schedule-analysis-results',
+                                    version: '1.0',
+                                    results: {
+                                      totalDays: 45,
+                                      phases: ['Pre-Production', 'Production', 'Post-Production'],
+                                      estimatedCost: '$2.5M'
+                                    }
+                                  }),
+                                  scriptAnalysis: JSON.stringify({
+                                    exportTimestamp: new Date().toISOString(),
+                                    exportType: 'script-analysis-results', 
+                                    version: '1.0',
+                                    results: {
+                                      complexity: 'HIGH',
+                                      estimatedBudget: '$3.2M',
+                                      confidence: 0.87
+                                    }
+                                  }),
+                                  timestamp: new Date().toISOString()
+                                }
+                              }
+                            }));
+                          }}
+                          className="text-sm bg-yellow-500 text-white px-3 py-1 rounded hover:bg-yellow-600"
+                        >
+                          🧪 Test Kitsu Connection
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+                )}
+
+                {/* File Upload Section - Only shown when file source is selected */}
+                {dataSource === 'file' && analysisType === 'script' && (
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Upload Script Breakdown (SSD.json)
+                      📄 Upload Script Breakdown (SSD.json)
                     </label>
                     <div className="flex items-center justify-center w-full">
                       <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100">
@@ -818,11 +1379,88 @@ export function AnalysisDashboard({ className = '' }: AnalysisDashboardProps) {
 
                 {/* Budget Analysis Inputs */}
                 {analysisType === 'budget' && (
-                  <div className="space-y-4">
-                    {/* Script Analysis JSON Upload */}
+                  <div className="space-y-6">
+                    {/* Local Analysis Data Options */}
+                    <div className="border-b border-gray-200 pb-4">
+                      <label className="block text-sm font-medium text-gray-700 mb-3">
+                        📊 Use Previously Generated Analysis Data
+                      </label>
+                      
+                      {/* Local Data Status */}
+                      <div className="mb-3 p-3 bg-gray-50 rounded-lg">
+                        <div className="text-xs font-medium text-gray-600 mb-2">Available in Browser Storage:</div>
+                        <div className="grid grid-cols-2 gap-2 text-xs">
+                          <div className={`flex items-center ${
+                            localStorage.getItem('currentScriptAnalysis') 
+                              ? 'text-green-700' 
+                              : 'text-gray-500'
+                          }`}>
+                            <div className={`w-2 h-2 rounded-full mr-2 ${
+                              localStorage.getItem('currentScriptAnalysis') 
+                                ? 'bg-green-500' 
+                                : 'bg-gray-300'
+                            }`}></div>
+                            Script Analysis {localStorage.getItem('currentScriptAnalysis') ? '✓' : '✗'}
+                          </div>
+                          <div className={`flex items-center ${
+                            localStorage.getItem('currentScheduleAnalysis') 
+                              ? 'text-green-700' 
+                              : 'text-gray-500'
+                          }`}>
+                            <div className={`w-2 h-2 rounded-full mr-2 ${
+                              localStorage.getItem('currentScheduleAnalysis') 
+                                ? 'bg-green-500' 
+                                : 'bg-gray-300'
+                            }`}></div>
+                            Schedule Analysis {localStorage.getItem('currentScheduleAnalysis') ? '✓' : '✗'}
+                          </div>
+                        </div>
+                      </div>
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                        <button
+                          onClick={handleLoadLocalScriptAnalysis}
+                          className={`px-3 py-2 text-sm border-2 rounded-lg transition-all flex items-center justify-center ${
+                            currentScriptAnalysis
+                              ? 'border-green-500 bg-green-50 text-green-700'
+                              : 'border-gray-300 bg-white hover:border-gray-400 text-gray-700'
+                          }`}
+                        >
+                          <BarChart3 className="w-4 h-4 mr-2" />
+                          {currentScriptAnalysis ? '✓ Script Analysis' : 'Load Script Analysis'}
+                        </button>
+                        
+                        <button
+                          onClick={handleLoadLocalScheduleAnalysis}
+                          className={`px-3 py-2 text-sm border-2 rounded-lg transition-all flex items-center justify-center ${
+                            currentScheduleAnalysis
+                              ? 'border-green-500 bg-green-50 text-green-700'
+                              : 'border-gray-300 bg-white hover:border-gray-400 text-gray-700'
+                          }`}
+                        >
+                          <Clock className="w-4 h-4 mr-2" />
+                          {currentScheduleAnalysis ? '✓ Schedule Analysis' : 'Load Schedule Analysis'}
+                        </button>
+                        
+                        <button
+                          onClick={handleUseLocalAnalysisData}
+                          className="px-3 py-2 text-sm bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-all flex items-center justify-center"
+                        >
+                          <CheckCircle className="w-4 h-4 mr-2" />
+                          Load Both
+                        </button>
+                      </div>
+                      
+                      <div className="mt-2 text-xs text-gray-600">
+                        Use analysis results generated in previous Script and Schedule analysis runs
+                      </div>
+                    </div>
+
+                    <div className="text-center text-gray-400 text-sm">or upload files manually</div>
+
+                    {/* File Upload Section */}
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Upload Script Analysis JSON
+                        📄 Upload Script Analysis JSON
                       </label>
                       <div className="flex items-center justify-center w-full">
                         <label className={`flex flex-col items-center justify-center w-full h-24 border-2 border-dashed rounded-lg cursor-pointer ${
@@ -859,7 +1497,7 @@ export function AnalysisDashboard({ className = '' }: AnalysisDashboardProps) {
                     {/* Schedule Analysis JSON Upload */}
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Upload Schedule Analysis JSON
+                        📅 Upload Schedule Analysis JSON
                       </label>
                       <div className="flex items-center justify-center w-full">
                         <label className={`flex flex-col items-center justify-center w-full h-24 border-2 border-dashed rounded-lg cursor-pointer ${
