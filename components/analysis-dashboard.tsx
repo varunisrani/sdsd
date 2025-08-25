@@ -18,7 +18,12 @@ import {
   Calendar,
   Database,
   Trash2,
-  Eye
+  Eye,
+  Users,
+  Package,
+  MapPin,
+  Car,
+  Building
 } from 'lucide-react';
 import { BudgetAnalysisService, ScriptDataUtils as BudgetUtils, BudgetAnalysisResult, AgentTestResult, ScriptData, DEFAULT_BUDGET_CONFIG } from '../lib/budget-integration';
 import { ScriptAnalysisService, ScriptDataUtils, ScriptAnalysisResult, AssetsData, DEFAULT_SCRIPT_CONFIG } from '../lib/script-integration';
@@ -27,12 +32,6 @@ import { AnalysisStorageService, StoredAnalysis } from '../lib/storage-service';
 
 type AnalysisType = 'budget' | 'script' | 'schedule';
 
-interface DashboardStats {
-  totalProjects: number;
-  avgProcessingTime: string;
-  successRate: string;
-  totalBudgetAnalyzed: string;
-}
 
 interface AnalysisDashboardProps {
   className?: string;
@@ -115,13 +114,6 @@ export function AnalysisDashboard({ className = '' }: AnalysisDashboardProps) {
     return () => window.removeEventListener('storage', handleStorageChange);
   }, []);
 
-  // Dashboard stats (mock data for now)
-  const [dashboardStats] = useState<DashboardStats>({
-    totalProjects: 0,
-    avgProcessingTime: '0s',
-    successRate: '0%',
-    totalBudgetAnalyzed: '$0'
-  });
 
   // Initialize services
   const createBudgetService = useCallback(() => {
@@ -696,7 +688,7 @@ export function AnalysisDashboard({ className = '' }: AnalysisDashboardProps) {
                     onClick={() => AnalysisStorageService.exportAnalyses()}
                     className="px-3 py-2 text-sm bg-blue-600 text-white rounded-md hover:bg-blue-700 flex items-center gap-2"
                   >
-                    <Download className="w-4 h-4" />
+                    <Download className="w-5 h-5" />
                     Export
                   </button>
                   <button
@@ -751,7 +743,7 @@ export function AnalysisDashboard({ className = '' }: AnalysisDashboardProps) {
                             className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-md transition-colors"
                             title="View Analysis"
                           >
-                            <Eye className="w-4 h-4" />
+                            <Eye className="w-5 h-5" />
                           </button>
                           <button
                             onClick={() => handleDeleteAnalysis(analysis.id)}
@@ -787,74 +779,6 @@ export function AnalysisDashboard({ className = '' }: AnalysisDashboardProps) {
           </div>
         )}
 
-        {/* Dashboard Stats */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-          <div className="bg-white rounded-lg shadow p-6">
-            <div className="flex items-center">
-              <div className="p-2 bg-blue-100 rounded-md">
-                <FileText className="w-6 h-6 text-blue-600" />
-              </div>
-              <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600">Total Projects</p>
-                <p className="text-2xl font-semibold text-gray-900">{dashboardStats.totalProjects}</p>
-              </div>
-            </div>
-          </div>
-
-          <div className="bg-white rounded-lg shadow p-6">
-            <div className="flex items-center">
-              <div className="p-2 bg-green-100 rounded-md">
-                <Clock className="w-6 h-6 text-green-600" />
-              </div>
-              <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600">Avg Processing</p>
-                <p className="text-2xl font-semibold text-gray-900">{dashboardStats.avgProcessingTime}</p>
-              </div>
-            </div>
-          </div>
-
-          <div className="bg-white rounded-lg shadow p-6">
-            <div className="flex items-center">
-              <div className="p-2 bg-yellow-100 rounded-md">
-                <BarChart3 className="w-6 h-6 text-yellow-600" />
-              </div>
-              <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600">Success Rate</p>
-                <p className="text-2xl font-semibold text-gray-900">{dashboardStats.successRate}</p>
-              </div>
-            </div>
-          </div>
-
-          <div className="bg-white rounded-lg shadow p-6">
-            <div className="flex items-center">
-              <div className={`p-2 rounded-md ${
-                analysisType === 'budget' ? 'bg-purple-100' : 
-                analysisType === 'script' ? 'bg-indigo-100' :
-                'bg-green-100'
-              }`}>
-                {analysisType === 'budget' ? (
-                  <DollarSign className="w-6 h-6 text-purple-600" />
-                ) : analysisType === 'script' ? (
-                  <Target className="w-6 h-6 text-indigo-600" />
-                ) : (
-                  <Calendar className="w-6 h-6 text-green-600" />
-                )}
-              </div>
-              <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600">
-                  {analysisType === 'budget' ? 'Total Budget' : 
-                   analysisType === 'script' ? 'Total Elements' :
-                   'Shooting Days'}
-                </p>
-                <p className="text-2xl font-semibold text-gray-900">
-                  {analysisType === 'budget' ? dashboardStats.totalBudgetAnalyzed : 
-                   analysisType === 'script' ? '0' :
-                   '0'}
-                </p>
-              </div>
-            </div>
-          </div>
-        </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Script Management Panel */}
@@ -1282,19 +1206,29 @@ function BudgetResults({ result, onExport }: { result: BudgetAnalysisResult, onE
   const completedStages = Object.values(result.stages).filter(stage => stage.completed).length;
   const totalStages = Object.keys(result.stages).length;
   const successRate = (completedStages / totalStages) * 100;
+  const [showUIView, setShowUIView] = useState(false);
 
   return (
     <div className="space-y-6">
-      {/* Export Button */}
+      {/* Export and UI Toggle Buttons */}
       <div className="flex justify-between items-center">
         <h4 className="text-lg font-semibold">Budget Analysis Results</h4>
-        <button
-          onClick={onExport}
-          className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors flex items-center gap-2 text-sm"
-        >
-          <Download className="w-4 h-4" />
-          Export JSON
-        </button>
+        <div className="flex gap-2">
+          <button
+            onClick={() => setShowUIView(!showUIView)}
+            className={`px-5 py-3 ${showUIView ? 'bg-gradient-to-r from-emerald-500 to-green-600 hover:from-emerald-600 hover:to-green-700 shadow-lg' : 'bg-gradient-to-r from-purple-500 to-indigo-600 hover:from-purple-600 hover:to-indigo-700 shadow-lg'} text-white rounded-xl transition-all duration-200 flex items-center gap-2 text-sm font-bold border-0`}
+          >
+            <Eye className="w-5 h-5" />
+            {showUIView ? 'Show Raw JSON' : 'Show in UI'}
+          </button>
+          <button
+            onClick={onExport}
+            className="px-5 py-3 bg-gradient-to-r from-blue-500 to-cyan-600 hover:from-blue-600 hover:to-cyan-700 text-white rounded-xl transition-all duration-200 flex items-center gap-2 text-sm font-bold shadow-lg border-0"
+          >
+            <Download className="w-5 h-5" />
+            Export JSON
+          </button>
+        </div>
       </div>
       {/* Overall Status */}
       <div className={`p-4 rounded-lg ${result.success ? 'bg-green-50 border border-green-200' : 'bg-red-50 border border-red-200'}`}>
@@ -1361,44 +1295,53 @@ function BudgetResults({ result, onExport }: { result: BudgetAnalysisResult, onE
         </div>
       </div>
 
-      {/* Raw AI Agent Responses */}
+      {/* Agent Results Display */}
       <div>
-        <h5 className="font-medium text-gray-900 mb-3">Raw AI Agent Responses</h5>
-        <div className="space-y-4">
-          {Object.entries(result.stages).map(([stageName, stage]) => (
-            <div key={stageName}>
-              {stage.completed && stage.data ? (
-                <details className="border border-gray-200 rounded-lg" open>
-                  <summary className="cursor-pointer p-4 bg-gray-50 hover:bg-gray-100 rounded-lg font-medium text-gray-900 flex items-center justify-between">
-                    <span className="flex items-center">
-                      <DollarSign className="w-4 h-4 text-blue-500 mr-2" />
-                      {stageName.replace(/([A-Z])/g, ' $1').trim()} Agent Raw JSON Response
-                    </span>
-                    <span className="text-sm text-gray-500">{stage.duration}ms</span>
-                  </summary>
-                  <div className="p-4 bg-white border-t border-gray-200">
-                    <div className="mb-2 text-sm font-medium text-gray-700">Raw JSON Output:</div>
-                    <pre className="bg-gray-900 text-green-400 p-4 rounded-md overflow-x-auto text-xs font-mono">
-                      <code>{JSON.stringify(stage.data, null, 2)}</code>
-                    </pre>
+        <h5 className="font-medium text-gray-900 mb-3">
+          {showUIView ? 'Budget Analysis Details' : 'Raw AI Agent Responses'}
+        </h5>
+        
+        {showUIView ? (
+          // UI-Friendly Budget Display
+          <BudgetUIDisplay result={result} />
+        ) : (
+          // Raw JSON Display
+          <div className="space-y-4">
+            {Object.entries(result.stages).map(([stageName, stage]) => (
+              <div key={stageName}>
+                {stage.completed && stage.data ? (
+                  <details className="border border-gray-200 rounded-lg" open>
+                    <summary className="cursor-pointer p-4 bg-gray-50 hover:bg-gray-100 rounded-lg font-medium text-gray-900 flex items-center justify-between">
+                      <span className="flex items-center">
+                        <DollarSign className="w-4 h-4 text-blue-500 mr-2" />
+                        {stageName.replace(/([A-Z])/g, ' $1').trim()} Agent Raw JSON Response
+                      </span>
+                      <span className="text-sm text-gray-500">{stage.duration}ms</span>
+                    </summary>
+                    <div className="p-4 bg-white border-t border-gray-200">
+                      <div className="mb-2 text-sm font-medium text-gray-700">Raw JSON Output:</div>
+                      <pre className="bg-gray-900 text-green-400 p-4 rounded-md overflow-x-auto text-xs font-mono">
+                        <code>{JSON.stringify(stage.data, null, 2)}</code>
+                      </pre>
+                    </div>
+                  </details>
+                ) : (
+                  <div className="border border-red-200 rounded-lg p-4 bg-red-50">
+                    <div className="flex items-center">
+                      <AlertCircle className="w-4 h-4 text-red-500 mr-2" />
+                      <span className="font-medium text-red-800">
+                        {stageName.replace(/([A-Z])/g, ' $1').trim()} Agent Failed
+                      </span>
+                    </div>
+                    {stage.error && (
+                      <p className="text-sm text-red-700 mt-2">{stage.error}</p>
+                    )}
                   </div>
-                </details>
-              ) : (
-                <div className="border border-red-200 rounded-lg p-4 bg-red-50">
-                  <div className="flex items-center">
-                    <AlertCircle className="w-4 h-4 text-red-500 mr-2" />
-                    <span className="font-medium text-red-800">
-                      {stageName.replace(/([A-Z])/g, ' $1').trim()} Agent Failed
-                    </span>
-                  </div>
-                  {stage.error && (
-                    <p className="text-sm text-red-700 mt-2">{stage.error}</p>
-                  )}
-                </div>
-              )}
-            </div>
-          ))}
-        </div>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
       </div>
 
       {/* Error Details */}
@@ -1417,19 +1360,29 @@ function ScriptResults({ result, onExport }: { result: ScriptAnalysisResult, onE
   const completedStages = Object.values(result.stages).filter(stage => stage.completed).length;
   const totalStages = Object.keys(result.stages).length;
   const successRate = (completedStages / totalStages) * 100;
+  const [showUIView, setShowUIView] = useState(false);
 
   return (
     <div className="space-y-6">
-      {/* Export Button */}
+      {/* Export and UI Toggle Buttons */}
       <div className="flex justify-between items-center">
         <h4 className="text-lg font-semibold">Script Analysis Results</h4>
-        <button
-          onClick={onExport}
-          className="px-4 py-2 bg-purple-600 text-white rounded-md hover:bg-purple-700 transition-colors flex items-center gap-2 text-sm"
-        >
-          <Download className="w-4 h-4" />
-          Export JSON
-        </button>
+        <div className="flex gap-2">
+          <button
+            onClick={() => setShowUIView(!showUIView)}
+            className={`px-5 py-3 ${showUIView ? 'bg-gradient-to-r from-emerald-500 to-green-600 hover:from-emerald-600 hover:to-green-700 shadow-lg' : 'bg-gradient-to-r from-purple-500 to-indigo-600 hover:from-purple-600 hover:to-indigo-700 shadow-lg'} text-white rounded-xl transition-all duration-200 flex items-center gap-2 text-sm font-bold border-0`}
+          >
+            <Eye className="w-5 h-5" />
+            {showUIView ? 'Show Raw JSON' : 'Show in UI'}
+          </button>
+          <button
+            onClick={onExport}
+            className="px-5 py-3 bg-gradient-to-r from-purple-500 to-pink-600 hover:from-purple-600 hover:to-pink-700 text-white rounded-xl transition-all duration-200 flex items-center gap-2 text-sm font-bold shadow-lg border-0"
+          >
+            <Download className="w-5 h-5" />
+            Export JSON
+          </button>
+        </div>
       </div>
       {/* Overall Status */}
       <div className={`p-4 rounded-lg ${result.success ? 'bg-green-50 border border-green-200' : 'bg-red-50 border border-red-200'}`}>
@@ -1559,44 +1512,53 @@ function ScriptResults({ result, onExport }: { result: ScriptAnalysisResult, onE
         </div>
       )}
 
-      {/* Raw AI Agent Responses */}
+      {/* Agent Results Display */}
       <div>
-        <h5 className="font-medium text-gray-900 mb-3">Raw AI Agent Responses</h5>
-        <div className="space-y-4">
-          {Object.entries(result.stages).map(([stageName, stage]) => (
-            <div key={stageName}>
-              {stage.completed && stage.data ? (
-                <details className="border border-gray-200 rounded-lg" open>
-                  <summary className="cursor-pointer p-4 bg-gray-50 hover:bg-gray-100 rounded-lg font-medium text-gray-900 flex items-center justify-between">
-                    <span className="flex items-center">
-                      <Film className="w-4 h-4 text-purple-500 mr-2" />
-                      {stageName.replace(/([A-Z])/g, ' $1').trim()} Agent Raw JSON Response
-                    </span>
-                    <span className="text-sm text-gray-500">{stage.duration}ms</span>
-                  </summary>
-                  <div className="p-4 bg-white border-t border-gray-200">
-                    <div className="mb-2 text-sm font-medium text-gray-700">Raw JSON Output:</div>
-                    <pre className="bg-gray-900 text-green-400 p-4 rounded-md overflow-x-auto text-xs font-mono">
-                      <code>{JSON.stringify(stage.data, null, 2)}</code>
-                    </pre>
+        <h5 className="font-medium text-gray-900 mb-3">
+          {showUIView ? 'Script Analysis Details' : 'Raw AI Agent Responses'}
+        </h5>
+        
+        {showUIView ? (
+          // UI-Friendly Script Display
+          <ScriptUIDisplay result={result} />
+        ) : (
+          // Raw JSON Display
+          <div className="space-y-4">
+            {Object.entries(result.stages).map(([stageName, stage]) => (
+              <div key={stageName}>
+                {stage.completed && stage.data ? (
+                  <details className="border border-gray-200 rounded-lg" open>
+                    <summary className="cursor-pointer p-4 bg-gray-50 hover:bg-gray-100 rounded-lg font-medium text-gray-900 flex items-center justify-between">
+                      <span className="flex items-center">
+                        <Film className="w-4 h-4 text-purple-500 mr-2" />
+                        {stageName.replace(/([A-Z])/g, ' $1').trim()} Agent Raw JSON Response
+                      </span>
+                      <span className="text-sm text-gray-500">{stage.duration}ms</span>
+                    </summary>
+                    <div className="p-4 bg-white border-t border-gray-200">
+                      <div className="mb-2 text-sm font-medium text-gray-700">Raw JSON Output:</div>
+                      <pre className="bg-gray-900 text-green-400 p-4 rounded-md overflow-x-auto text-xs font-mono">
+                        <code>{JSON.stringify(stage.data, null, 2)}</code>
+                      </pre>
+                    </div>
+                  </details>
+                ) : (
+                  <div className="border border-red-200 rounded-lg p-4 bg-red-50">
+                    <div className="flex items-center">
+                      <AlertCircle className="w-4 h-4 text-red-500 mr-2" />
+                      <span className="font-medium text-red-800">
+                        {stageName.replace(/([A-Z])/g, ' $1').trim()} Agent Failed
+                      </span>
+                    </div>
+                    {stage.error && (
+                      <p className="text-sm text-red-700 mt-2">{stage.error}</p>
+                    )}
                   </div>
-                </details>
-              ) : (
-                <div className="border border-red-200 rounded-lg p-4 bg-red-50">
-                  <div className="flex items-center">
-                    <AlertCircle className="w-4 h-4 text-red-500 mr-2" />
-                    <span className="font-medium text-red-800">
-                      {stageName.replace(/([A-Z])/g, ' $1').trim()} Agent Failed
-                    </span>
-                  </div>
-                  {stage.error && (
-                    <p className="text-sm text-red-700 mt-2">{stage.error}</p>
-                  )}
-                </div>
-              )}
-            </div>
-          ))}
-        </div>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );
@@ -1604,22 +1566,34 @@ function ScriptResults({ result, onExport }: { result: ScriptAnalysisResult, onE
 
 // Schedule Results Display Component (new)
 function ScheduleResults({ result, onExport }: { result: ScheduleAnalysisResult, onExport?: () => void }) {
+  const [showUIView, setShowUIView] = useState(false);
   const completedStages = Object.values(result.stages).filter(stage => stage.completed).length;
   const totalStages = Object.keys(result.stages).length;
   const successRate = (completedStages / totalStages) * 100;
 
   return (
     <div className="space-y-6">
-      {/* Export Button */}
+      {/* Export and Toggle Buttons */}
       <div className="flex justify-between items-center">
-        <h4 className="text-lg font-semibold">Schedule Analysis Results</h4>
-        <button
-          onClick={onExport}
-          className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors flex items-center gap-2 text-sm"
-        >
-          <Download className="w-4 h-4" />
-          Export JSON
-        </button>
+        <h4 className="text-lg font-semibold">
+          {showUIView ? 'Schedule Analysis Details' : 'Raw AI Agent Responses'}
+        </h4>
+        <div className="flex gap-2">
+          <button
+            onClick={() => setShowUIView(!showUIView)}
+            className={`px-5 py-3 ${showUIView ? 'bg-gradient-to-r from-emerald-500 to-green-600 hover:from-emerald-600 hover:to-green-700 shadow-lg' : 'bg-gradient-to-r from-purple-500 to-indigo-600 hover:from-purple-600 hover:to-indigo-700 shadow-lg'} text-white rounded-xl transition-all duration-200 flex items-center gap-2 text-sm font-bold border-0`}
+          >
+            <Eye className="w-5 h-5" />
+            {showUIView ? 'Show Raw JSON' : 'Show in UI'}
+          </button>
+          <button
+            onClick={onExport}
+            className="px-5 py-3 bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white rounded-xl transition-all duration-200 flex items-center gap-2 text-sm font-bold shadow-lg border-0"
+          >
+            <Download className="w-5 h-5" />
+            Export JSON
+          </button>
+        </div>
       </div>
       {/* Overall Status */}
       <div className={`p-4 rounded-lg ${result.success ? 'bg-green-50 border border-green-200' : 'bg-red-50 border border-red-200'}`}>
@@ -1641,8 +1615,13 @@ function ScheduleResults({ result, onExport }: { result: ScheduleAnalysisResult,
         </div>
       </div>
 
-      {/* Schedule Summary */}
-      {result.finalSchedule && (
+      {showUIView ? (
+        // UI-Friendly Schedule Display
+        <ScheduleUIDisplay result={result} />
+      ) : (
+        <>
+        {/* Schedule Summary */}
+        {result.finalSchedule && (
         <>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             <div className="bg-green-50 p-4 rounded-lg">
@@ -1766,6 +1745,8 @@ function ScheduleResults({ result, onExport }: { result: ScheduleAnalysisResult,
           <p className="text-sm text-red-700">{result.error}</p>
         </div>
       )}
+        </>
+      )}
     </div>
   );
 }
@@ -1850,6 +1831,1396 @@ function AgentTestResults({
           </div>
         </div>
       )}
+    </div>
+  );
+}
+
+// UI-Friendly Budget Display Component
+function BudgetUIDisplay({ result }: { result: BudgetAnalysisResult }) {
+  const stages = result.stages || {};
+  
+  // Get individual agent data
+  const ratingsData = (stages as any).ratingsAgent?.data;
+  const preliminaryBudgetData = (stages as any).preliminaryBudget?.data;
+  const productionBudgetData = (stages as any).productionBudget?.data;
+  const realTimeMonitorData = (stages as any).realTimeMonitor?.data;
+
+  return (
+    <div className="space-y-6">
+      
+      {/* Union Rates & Equipment Costs Agent */}
+      {ratingsData && (
+        <div className="bg-gradient-to-br from-cyan-400 via-blue-500 to-indigo-600 p-6 rounded-2xl shadow-xl border-0">
+          <div className="flex items-center justify-between mb-4">
+            <h6 className="text-xl font-bold text-white flex items-center">
+              <Users className="w-6 h-6 text-white mr-3" />
+              Union Rates & Equipment Costs Agent
+            </h6>
+            <span className="px-4 py-2 bg-white/20 backdrop-blur-sm text-white text-sm rounded-full font-bold border border-white/30">
+              Confidence: {Math.round((ratingsData.confidence || 0) * 100)}%
+            </span>
+          </div>
+          
+          {/* Union Rates */}
+          {ratingsData.unionRates && (
+            <div className="mb-6">
+              <h4 className="font-bold text-white mb-4 text-xl">Union Rates</h4>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                {ratingsData.unionRates.sagAftra && (
+                  <div className="bg-white/90 backdrop-blur-sm p-5 rounded-xl shadow-lg border border-white/50">
+                    <h5 className="font-bold text-gray-900 mb-3 text-lg">SAG-AFTRA</h5>
+                    <p className="text-sm text-gray-700 font-medium">Daily Rate: <span className="text-emerald-600 font-bold">{ratingsData.unionRates.sagAftra.dailyRate}</span></p>
+                    <p className="text-sm text-gray-700 font-medium">Weekly Rate: <span className="text-emerald-600 font-bold">{ratingsData.unionRates.sagAftra.weeklyRate}</span></p>
+                    <p className="text-sm text-gray-700 font-medium">Pension & Health: <span className="text-emerald-600 font-bold">{ratingsData.unionRates.sagAftra.pensionHealth}</span></p>
+                  </div>
+                )}
+                {ratingsData.unionRates.iatse && (
+                  <div className="bg-white/90 backdrop-blur-sm p-5 rounded-xl shadow-lg border border-white/50">
+                    <h5 className="font-bold text-gray-900 mb-3 text-lg">IATSE</h5>
+                    <p className="text-sm text-gray-700 font-medium">Base Rate: <span className="text-blue-600 font-bold">{ratingsData.unionRates.iatse.baseRate}</span></p>
+                    <p className="text-sm text-gray-700 font-medium">Overtime: <span className="text-blue-600 font-bold">{ratingsData.unionRates.iatse.overtimeMultiplier}x</span></p>
+                    <p className="text-sm text-gray-700 font-medium">Fringe: <span className="text-blue-600 font-bold">{Math.round((ratingsData.unionRates.iatse.fringePercentage || 0) * 100)}%</span></p>
+                  </div>
+                )}
+                {ratingsData.unionRates.dga && (
+                  <div className="bg-white/90 backdrop-blur-sm p-5 rounded-xl shadow-lg border border-white/50">
+                    <h5 className="font-bold text-gray-900 mb-3 text-lg">DGA</h5>
+                    <p className="text-sm text-gray-700 font-medium">Director Weekly: <span className="text-purple-600 font-bold">{ratingsData.unionRates.dga.directorWeekly}</span></p>
+                    <p className="text-sm text-gray-700 font-medium">Assistant Daily: <span className="text-purple-600 font-bold">{ratingsData.unionRates.dga.assistantDaily}</span></p>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+          
+          {/* Equipment Costs */}
+          {ratingsData.equipmentCosts && (
+            <div className="mb-4">
+              <h4 className="font-bold text-white mb-4 text-xl">Equipment Costs</h4>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                {ratingsData.equipmentCosts.camera && (
+                  <div className="bg-white/90 backdrop-blur-sm p-5 rounded-xl shadow-lg border border-white/50">
+                    <h5 className="font-bold text-gray-900 mb-3 text-lg">Camera Equipment</h5>
+                    {ratingsData.equipmentCosts.camera.map((item: any, index: number) => (
+                      <div key={index} className="mb-2 text-sm">
+                        <p className="font-medium text-gray-700">{item.item}</p>
+                        <p className="text-gray-600">Daily: {item.dailyRate} | Weekly: {item.weeklyRate}</p>
+                      </div>
+                    ))}
+                  </div>
+                )}
+                {ratingsData.equipmentCosts.lighting && (
+                  <div className="bg-white/90 backdrop-blur-sm p-5 rounded-xl shadow-lg border border-white/50">
+                    <h5 className="font-bold text-gray-900 mb-3 text-lg">Lighting Equipment</h5>
+                    {ratingsData.equipmentCosts.lighting.map((item: any, index: number) => (
+                      <div key={index} className="mb-2 text-sm">
+                        <p className="font-medium text-gray-700">{item.item}</p>
+                        <p className="text-gray-600">Daily: {item.dailyRate} | Weekly: {item.weeklyRate}</p>
+                      </div>
+                    ))}
+                  </div>
+                )}
+                {ratingsData.equipmentCosts.grip && (
+                  <div className="bg-white/90 backdrop-blur-sm p-5 rounded-xl shadow-lg border border-white/50">
+                    <h5 className="font-bold text-gray-900 mb-3 text-lg">Grip Equipment</h5>
+                    {ratingsData.equipmentCosts.grip.map((item: any, index: number) => (
+                      <div key={index} className="mb-2 text-sm">
+                        <p className="font-medium text-gray-700">{item.item}</p>
+                        <p className="text-gray-600">Daily: {item.dailyRate} | Weekly: {item.weeklyRate}</p>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+          
+          {/* Location Costs */}
+          {ratingsData.locationCosts && (
+            <div>
+              <h4 className="font-bold text-white mb-4 text-xl">Location Costs</h4>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                {ratingsData.locationCosts.map((location: any, index: number) => (
+                  <div key={index} className="bg-white p-3 rounded-lg border">
+                    <h5 className="font-medium text-gray-800 mb-1">{location.location}</h5>
+                    <p className="text-xs text-gray-600">Permit: {location.permitFee}</p>
+                    <p className="text-xs text-gray-600">Insurance: {location.insuranceRate}</p>
+                    <p className="text-xs text-gray-600">Security: {location.securityCost}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Preliminary Budget Agent */}
+      {preliminaryBudgetData && (
+        <div className="bg-gradient-to-br from-emerald-400 via-green-500 to-teal-600 p-6 rounded-2xl shadow-xl border-0">
+          <div className="flex items-center justify-between mb-4">
+            <h6 className="text-xl font-bold text-white flex items-center">
+              <DollarSign className="w-6 h-6 text-white mr-3" />
+              Preliminary Budget Agent
+            </h6>
+            <span className="px-4 py-2 bg-white/20 backdrop-blur-sm text-white text-sm rounded-full font-bold border border-white/30">
+              Confidence: {Math.round((preliminaryBudgetData.confidence || 0) * 100)}%
+            </span>
+          </div>
+          
+          {/* Top Sheet */}
+          {preliminaryBudgetData.topSheet && (
+            <div className="mb-6">
+              <h4 className="font-bold text-white mb-4 text-xl">Budget Top Sheet</h4>
+              <div className="bg-white/90 backdrop-blur-sm p-6 rounded-xl shadow-lg border border-white/50">
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                  <div className="text-center">
+                    <p className="text-3xl font-black text-emerald-600">{preliminaryBudgetData.topSheet.totalBudget}</p>
+                    <p className="text-sm text-gray-700 font-bold">Total Budget</p>
+                  </div>
+                  <div className="text-center">
+                    <p className="text-2xl font-black text-blue-600">{preliminaryBudgetData.topSheet.atlBudget}</p>
+                    <p className="text-sm text-gray-700 font-bold">ATL ({preliminaryBudgetData.topSheet.atlPercentage}%)</p>
+                  </div>
+                  <div className="text-center">
+                    <p className="text-2xl font-black text-purple-600">{preliminaryBudgetData.topSheet.btlBudget}</p>
+                    <p className="text-sm text-gray-700 font-bold">BTL ({preliminaryBudgetData.topSheet.btlPercentage}%)</p>
+                  </div>
+                  <div className="text-center">
+                    <p className="text-2xl font-black text-orange-600">{preliminaryBudgetData.topSheet.contingency}</p>
+                    <p className="text-sm text-gray-700 font-bold">Contingency</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+          
+          {/* ATL Breakdown */}
+          {preliminaryBudgetData.atlBreakdown && (
+            <div className="mb-4">
+              <h4 className="font-semibold text-gray-900 mb-3">Above-The-Line Breakdown</h4>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                {Object.entries(preliminaryBudgetData.atlBreakdown).map(([key, value], index) => (
+                  <div key={index} className="bg-white p-3 rounded-lg border">
+                    <h5 className="font-medium text-gray-800 capitalize mb-1">{key}</h5>
+                    <p className="text-sm text-gray-600">{value as string}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+          
+          {/* BTL Breakdown */}
+          {preliminaryBudgetData.btlBreakdown && (
+            <div className="mb-4">
+              <h4 className="font-semibold text-gray-900 mb-3">Below-The-Line Breakdown</h4>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                {Object.entries(preliminaryBudgetData.btlBreakdown).map(([key, value], index) => (
+                  <div key={index} className="bg-white p-3 rounded-lg border">
+                    <h5 className="font-medium text-gray-800 capitalize mb-1">{key}</h5>
+                    <p className="text-sm text-gray-600">{value as string}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+          
+          {/* Budget Tier and Investor Summary */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {preliminaryBudgetData.budgetTier && (
+              <div className="bg-white p-4 rounded-lg border">
+                <h5 className="font-medium text-gray-800 mb-2">Budget Tier</h5>
+                <span className={`px-3 py-1 rounded-full text-sm font-medium ${
+                  preliminaryBudgetData.budgetTier === 'BASIC' ? 'bg-blue-100 text-blue-800' :
+                  preliminaryBudgetData.budgetTier === 'PREMIUM' ? 'bg-purple-100 text-purple-800' :
+                  'bg-gray-100 text-gray-800'
+                }`}>
+                  {preliminaryBudgetData.budgetTier}
+                </span>
+              </div>
+            )}
+            {preliminaryBudgetData.investorSummary && (
+              <div className="bg-white p-4 rounded-lg border">
+                <h5 className="font-medium text-gray-800 mb-2">Investor Summary</h5>
+                <p className="text-sm text-gray-600">{preliminaryBudgetData.investorSummary}</p>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Production Budget Agent */}
+      {productionBudgetData && (
+        <div className="bg-gradient-to-br from-purple-500 via-pink-500 to-rose-500 p-6 rounded-2xl shadow-xl border-0">
+          <div className="flex items-center justify-between mb-4">
+            <h6 className="text-xl font-bold text-white flex items-center">
+              <Package className="w-6 h-6 text-white mr-3" />
+              Production Budget Agent
+            </h6>
+            <span className="px-4 py-2 bg-white/20 backdrop-blur-sm text-white text-sm rounded-full font-bold border border-white/30">
+              Confidence: {Math.round((productionBudgetData.confidence || 0) * 100)}%
+            </span>
+          </div>
+          
+          {/* Department Budgets */}
+          {productionBudgetData.departmentBudgets && (
+            <div className="mb-6">
+              <h4 className="font-bold text-white mb-4 text-xl">Department Budgets</h4>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 max-h-96 overflow-y-auto">
+                {productionBudgetData.departmentBudgets.map((dept: any, index: number) => (
+                  <div key={index} className="bg-white/90 backdrop-blur-sm p-5 rounded-xl shadow-lg border border-white/50">
+                    <div className="flex items-center justify-between mb-3">
+                      <h5 className="font-bold text-gray-900 text-lg">{dept.department}</h5>
+                      <span className="text-xl font-black text-purple-600">{dept.budget}</span>
+                    </div>
+                    
+                    {dept.keyPersonnel && (
+                      <div className="mb-2">
+                        <p className="text-xs font-medium text-gray-700 mb-1">Key Personnel:</p>
+                        <div className="flex flex-wrap gap-1">
+                          {dept.keyPersonnel.slice(0, 3).map((person: string, i: number) => (
+                            <span key={i} className="px-2 py-1 bg-gray-100 text-xs rounded">{person}</span>
+                          ))}
+                          {dept.keyPersonnel.length > 3 && (
+                            <span className="px-2 py-1 bg-gray-200 text-xs rounded">+{dept.keyPersonnel.length - 3}</span>
+                          )}
+                        </div>
+                      </div>
+                    )}
+                    
+                    {dept.equipmentNeeds && (
+                      <div className="mb-2">
+                        <p className="text-xs font-medium text-gray-700 mb-1">Equipment:</p>
+                        <ul className="text-xs text-gray-600">
+                          {dept.equipmentNeeds.slice(0, 2).map((item: string, i: number) => (
+                            <li key={i}>• {item}</li>
+                          ))}
+                          {dept.equipmentNeeds.length > 2 && (
+                            <li className="text-gray-500">...+{dept.equipmentNeeds.length - 2} more</li>
+                          )}
+                        </ul>
+                      </div>
+                    )}
+                    
+                    {dept.specialRequirements && (
+                      <div>
+                        <p className="text-xs font-medium text-gray-700 mb-1">Special Requirements:</p>
+                        <ul className="text-xs text-gray-600">
+                          {dept.specialRequirements.slice(0, 2).map((req: string, i: number) => (
+                            <li key={i}>• {req}</li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+          
+          {/* Cast and Crew Costs */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+            {productionBudgetData.castCosts && (
+              <div className="bg-white p-4 rounded-lg border">
+                <h5 className="font-medium text-gray-800 mb-3">Cast Costs</h5>
+                <div className="space-y-2">
+                  {Object.entries(productionBudgetData.castCosts).map(([key, value], index) => (
+                    <div key={index} className="flex justify-between text-sm">
+                      <span className="capitalize text-gray-600">{key.replace(/([A-Z])/g, ' $1').trim()}:</span>
+                      <span className="font-medium">{value as string}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+            
+            {productionBudgetData.crewCosts && (
+              <div className="bg-white p-4 rounded-lg border">
+                <h5 className="font-medium text-gray-800 mb-3">Crew Costs</h5>
+                <div className="space-y-2">
+                  {Object.entries(productionBudgetData.crewCosts).map(([key, value], index) => (
+                    <div key={index} className="flex justify-between text-sm">
+                      <span className="capitalize text-gray-600">{key.replace(/([A-Z])/g, ' $1').trim()}:</span>
+                      <span className="font-medium">{value as string}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+          
+          {/* Shooting Schedule */}
+          {productionBudgetData.shootingSchedule && (
+            <div className="bg-white p-4 rounded-lg border">
+              <h5 className="font-medium text-gray-800 mb-3">Shooting Schedule</h5>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
+                <div>
+                  <p className="text-xl font-bold text-purple-600">{productionBudgetData.shootingSchedule.estimatedDays}</p>
+                  <p className="text-sm text-gray-600">Estimated Days</p>
+                </div>
+                <div>
+                  <p className="text-xl font-bold text-green-600">{productionBudgetData.shootingSchedule.averageDailyBudget}</p>
+                  <p className="text-sm text-gray-600">Daily Budget</p>
+                </div>
+                <div>
+                  <p className="text-xl font-bold text-orange-600">{productionBudgetData.shootingSchedule.overtimeRisk}</p>
+                  <p className="text-sm text-gray-600">Overtime Risk</p>
+                </div>
+                <div>
+                  <p className="text-xl font-bold text-blue-600">{productionBudgetData.shootingSchedule.weatherDays}</p>
+                  <p className="text-sm text-gray-600">Weather Days</p>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Real Time Monitor Agent */}
+      {realTimeMonitorData && (
+        <div className="bg-gradient-to-br from-orange-400 via-red-500 to-pink-600 p-6 rounded-2xl shadow-xl border-0">
+          <div className="flex items-center justify-between mb-4">
+            <h6 className="text-xl font-bold text-white flex items-center">
+              <AlertCircle className="w-6 h-6 text-white mr-3" />
+              Real Time Monitor Agent
+            </h6>
+            <span className="px-4 py-2 bg-white/20 backdrop-blur-sm text-white text-sm rounded-full font-bold border border-white/30">
+              Confidence: {Math.round((realTimeMonitorData.confidence || 0) * 100)}%
+            </span>
+          </div>
+          
+          {/* Expense Categories */}
+          {realTimeMonitorData.expenseCategories && (
+            <div className="mb-6">
+              <h4 className="font-bold text-white mb-4 text-xl">Expense Categories Monitoring</h4>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {realTimeMonitorData.expenseCategories.map((category: any, index: number) => (
+                  <div key={index} className="bg-white p-4 rounded-lg border">
+                    <div className="flex items-center justify-between mb-2">
+                      <h5 className="font-medium text-gray-800">{category.category}</h5>
+                      <span className={`px-2 py-1 text-xs rounded-full ${
+                        category.budgetAllocation === 'High' ? 'bg-red-100 text-red-800' :
+                        category.budgetAllocation === 'Medium' ? 'bg-yellow-100 text-yellow-800' :
+                        'bg-green-100 text-green-800'
+                      }`}>
+                        {category.budgetAllocation}
+                      </span>
+                    </div>
+                    <p className="text-sm text-gray-600 mb-2">Tracking: {category.trackingFrequency}</p>
+                    <div>
+                      <p className="text-xs font-medium text-gray-700 mb-1">Alert Thresholds:</p>
+                      <div className="flex flex-wrap gap-1">
+                        {category.alertThresholds.map((threshold: string, i: number) => (
+                          <span key={i} className="px-2 py-1 bg-gray-100 text-xs rounded">{threshold}</span>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+          
+          {/* Recommendations */}
+          {realTimeMonitorData.recommendations && (
+            <div>
+              <h4 className="font-bold text-white mb-4 text-xl">Monitoring Recommendations</h4>
+              <div className="bg-white/90 backdrop-blur-sm p-5 rounded-xl shadow-lg border border-white/50">
+                <ul className="space-y-2">
+                  {realTimeMonitorData.recommendations.map((recommendation: string, index: number) => (
+                    <li key={index} className="flex items-start text-sm">
+                      <CheckCircle className="w-4 h-4 text-green-500 mr-2 mt-0.5 flex-shrink-0" />
+                      <span className="text-gray-700">{recommendation}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
+    </div>
+  );
+}
+
+// UI-Friendly Script Display Component - Showing ALL Agents Data Separately
+function ScriptUIDisplay({ result }: { result: ScriptAnalysisResult }) {
+  const stages = result.stages || {};
+  
+  // Get individual agent data
+  const scriptParserData = (stages as any).scriptParser?.data;
+  const elementDetectionData = (stages as any).elementDetection?.data;
+  const categorizationData = (stages as any).categorization?.data;
+  const reportGeneratorData = (stages as any).reportGenerator?.data;
+
+  return (
+    <div className="space-y-8">
+      
+      {/* Script Parser Agent Results */}
+      {scriptParserData && (
+        <div className="bg-gradient-to-br from-cyan-400 via-blue-500 to-purple-600 p-6 rounded-2xl shadow-xl border-0">
+          <h6 className="text-xl font-bold text-white mb-4 flex items-center">
+            <Film className="w-6 h-6 text-white mr-3" />
+            Script Parser Agent Results
+          </h6>
+          
+          {/* Script Details */}
+          {scriptParserData.script && (
+            <div className="mb-6">
+              <div className="text-xl font-bold text-white mb-4">Script Information</div>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                <div className="bg-white/90 backdrop-blur-sm p-5 rounded-xl shadow-lg border border-white/50">
+                  <p className="text-sm font-bold text-gray-700">Title</p>
+                  <p className="text-xl font-black text-gray-900">{scriptParserData.script.title}</p>
+                </div>
+                <div className="bg-white/90 backdrop-blur-sm p-5 rounded-xl shadow-lg border border-white/50">
+                  <p className="text-sm font-bold text-gray-700">Genre</p>
+                  <p className="text-xl font-black text-blue-600">{scriptParserData.script.genre}</p>
+                </div>
+                <div className="bg-white/90 backdrop-blur-sm p-5 rounded-xl shadow-lg border border-white/50">
+                  <p className="text-sm font-bold text-gray-700">Type</p>
+                  <p className="text-xl font-black text-green-600">{scriptParserData.script.type}</p>
+                </div>
+                <div className="bg-white/90 backdrop-blur-sm p-5 rounded-xl shadow-lg border border-white/50">
+                  <p className="text-sm font-bold text-gray-700">Complexity</p>
+                  <span className={`px-3 py-1 rounded-full text-sm font-bold ${
+                    scriptParserData.script.complexity === 'HIGH' ? 'bg-red-100 text-red-800' :
+                    scriptParserData.script.complexity === 'MEDIUM' ? 'bg-yellow-100 text-yellow-800' :
+                    'bg-green-100 text-green-800'
+                  }`}>
+                    {scriptParserData.script.complexity}
+                  </span>
+                </div>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
+                <div className="bg-white p-4 rounded-lg shadow-sm">
+                  <p className="text-sm font-medium text-gray-600">Total Scenes</p>
+                  <p className="text-2xl font-bold text-purple-600">{scriptParserData.script.totalScenes}</p>
+                </div>
+                <div className="bg-white p-4 rounded-lg shadow-sm">
+                  <p className="text-sm font-medium text-gray-600">Estimated Pages</p>
+                  <p className="text-2xl font-bold text-orange-600">{scriptParserData.script.estimatedPages}</p>
+                </div>
+                <div className="bg-white p-4 rounded-lg shadow-sm">
+                  <p className="text-sm font-medium text-gray-600">Confidence</p>
+                  <p className="text-2xl font-bold text-blue-600">{(scriptParserData.confidence * 100).toFixed(0)}%</p>
+                </div>
+              </div>
+              {scriptParserData.script.logline && (
+                <div className="mt-4 p-4 bg-white rounded-lg shadow-sm">
+                  <p className="text-sm font-medium text-gray-600 mb-2">Logline:</p>
+                  <p className="text-gray-800 italic">{scriptParserData.script.logline}</p>
+                </div>
+              )}
+            </div>
+          )}
+          
+          {/* Script Parser - Cast, Props, Locations, Vehicles */}
+          {scriptParserData.elements && (
+            <div className="space-y-6">
+              {/* Cast */}
+              {scriptParserData.elements.cast && scriptParserData.elements.cast.length > 0 && (
+                <div>
+                  <div className="text-md font-medium text-gray-800 mb-3">Cast Members ({scriptParserData.elements.cast.length})</div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 max-h-64 overflow-y-auto">
+                    {scriptParserData.elements.cast.map((castMember: any, index: number) => (
+                      <div key={index} className="bg-white p-3 rounded-lg shadow-sm border-l-4 border-blue-500">
+                        <div className="flex justify-between items-start mb-2">
+                          <div className="font-bold text-gray-900 text-sm">{castMember.name}</div>
+                          <span className={`px-2 py-1 text-xs rounded-full font-medium ${
+                            castMember.importance === 'LEAD' ? 'bg-red-100 text-red-800' :
+                            castMember.importance === 'SUPPORTING' ? 'bg-yellow-100 text-yellow-800' :
+                            'bg-gray-100 text-gray-800'
+                          }`}>
+                            {castMember.importance}
+                          </span>
+                        </div>
+                        <p className="text-xs text-gray-600 mb-1">{castMember.role}</p>
+                        <p className="text-xs text-gray-500">Scenes: {castMember.scenes}</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Props */}
+              {scriptParserData.elements.props && scriptParserData.elements.props.length > 0 && (
+                <div>
+                  <div className="text-md font-medium text-gray-800 mb-3">Props ({scriptParserData.elements.props.length})</div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {scriptParserData.elements.props.map((prop: any, index: number) => (
+                      <div key={index} className="bg-white p-3 rounded-lg shadow-sm border-l-4 border-orange-500">
+                        <div className="flex justify-between items-start mb-2">
+                          <div className="font-bold text-gray-900 text-sm">{prop.name}</div>
+                          <span className={`px-2 py-1 text-xs rounded-full font-medium ${
+                            prop.complexity === 'COMPLEX' ? 'bg-red-100 text-red-800' :
+                            prop.complexity === 'MODERATE' ? 'bg-yellow-100 text-yellow-800' :
+                            'bg-green-100 text-green-800'
+                          }`}>
+                            {prop.complexity}
+                          </span>
+                        </div>
+                        <p className="text-xs text-gray-600 mb-1">Category: {prop.category}</p>
+                        <p className="text-xs text-gray-500">Department: {prop.department}</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Locations */}
+              {scriptParserData.elements.locations && scriptParserData.elements.locations.length > 0 && (
+                <div>
+                  <div className="text-md font-medium text-gray-800 mb-3">Locations ({scriptParserData.elements.locations.length})</div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {scriptParserData.elements.locations.map((location: any, index: number) => (
+                      <div key={index} className="bg-white p-3 rounded-lg shadow-sm border-l-4 border-purple-500">
+                        <div className="flex justify-between items-start mb-2">
+                          <div className="font-bold text-gray-900 text-sm">{location.name}</div>
+                          <span className={`px-2 py-1 text-xs rounded-full font-medium ${
+                            location.cost === 'HIGH' ? 'bg-red-100 text-red-800' :
+                            location.cost === 'MEDIUM' ? 'bg-yellow-100 text-yellow-800' :
+                            'bg-green-100 text-green-800'
+                          }`}>
+                            {location.cost}
+                          </span>
+                        </div>
+                        <p className="text-xs text-gray-600 mb-1">Type: {location.type}</p>
+                        <p className="text-xs text-gray-500">Complexity: {location.complexity}</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Vehicles */}
+              {scriptParserData.elements.vehicles && scriptParserData.elements.vehicles.length > 0 && (
+                <div>
+                  <div className="text-md font-medium text-gray-800 mb-3">Vehicles ({scriptParserData.elements.vehicles.length})</div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {scriptParserData.elements.vehicles.map((vehicle: any, index: number) => (
+                      <div key={index} className="bg-white p-3 rounded-lg shadow-sm border-l-4 border-cyan-500">
+                        <div className="flex justify-between items-start mb-2">
+                          <div className="font-bold text-gray-900 text-sm">{vehicle.name}</div>
+                          <span className={`px-2 py-1 text-xs rounded-full font-medium ${
+                            vehicle.complexity === 'COMPLEX' ? 'bg-red-100 text-red-800' :
+                            vehicle.complexity === 'MODERATE' ? 'bg-yellow-100 text-yellow-800' :
+                            'bg-green-100 text-green-800'
+                          }`}>
+                            {vehicle.complexity}
+                          </span>
+                        </div>
+                        <p className="text-xs text-gray-600 mb-1">Type: {vehicle.type}</p>
+                        <p className="text-xs text-gray-500">Purpose: {vehicle.purpose}</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Production Requirements */}
+          {scriptParserData.production && (
+            <div className="mt-6">
+              <div className="text-md font-medium text-gray-800 mb-3">Production Requirements</div>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                <div className="bg-white p-4 rounded-lg shadow-sm">
+                  <p className="text-sm font-medium text-gray-600">Estimated Budget</p>
+                  <p className="text-lg font-bold text-green-600">{scriptParserData.production.estimatedBudget}</p>
+                </div>
+                <div className="bg-white p-4 rounded-lg shadow-sm">
+                  <p className="text-sm font-medium text-gray-600">Shooting Days</p>
+                  <p className="text-lg font-bold text-blue-600">{scriptParserData.production.shootingDays}</p>
+                </div>
+                <div className="bg-white p-4 rounded-lg shadow-sm">
+                  <p className="text-sm font-medium text-gray-600">Prep Weeks</p>
+                  <p className="text-lg font-bold text-orange-600">{scriptParserData.production.prepWeeks}</p>
+                </div>
+                <div className="bg-white p-4 rounded-lg shadow-sm">
+                  <p className="text-sm font-medium text-gray-600">Crew Size</p>
+                  <p className="text-lg font-bold text-purple-600">{scriptParserData.production.crewSize}</p>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Element Detection Agent Results */}
+      {elementDetectionData && (
+        <div className="bg-gradient-to-r from-green-50 to-emerald-50 p-6 rounded-lg border">
+          <h6 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+            <Users className="w-5 h-5 text-green-600 mr-2" />
+            Element Detection Agent Results
+          </h6>
+          
+          {elementDetectionData.elementBreakdown && (
+            <div>
+              <div className="text-md font-medium text-gray-800 mb-3">Element Summary</div>
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+                <div className="bg-white p-4 rounded-lg shadow-sm">
+                  <p className="text-sm font-medium text-gray-600">Total Elements</p>
+                  <p className="text-2xl font-bold text-green-600">{elementDetectionData.elementBreakdown.totalElements}</p>
+                </div>
+                <div className="bg-white p-4 rounded-lg shadow-sm">
+                  <p className="text-sm font-medium text-gray-600">Cast</p>
+                  <p className="text-2xl font-bold text-blue-600">{elementDetectionData.elementBreakdown.cast?.length || 0}</p>
+                </div>
+                <div className="bg-white p-4 rounded-lg shadow-sm">
+                  <p className="text-sm font-medium text-gray-600">Wardrobe Items</p>
+                  <p className="text-2xl font-bold text-orange-600">{elementDetectionData.elementBreakdown.categoryCounts?.wardrobe || 0}</p>
+                </div>
+                <div className="bg-white p-4 rounded-lg shadow-sm">
+                  <p className="text-sm font-medium text-gray-600">Makeup Items</p>
+                  <p className="text-2xl font-bold text-purple-600">{elementDetectionData.elementBreakdown.categoryCounts?.makeup || 0}</p>
+                </div>
+              </div>
+
+              {/* Detailed Cast from Element Detection */}
+              {elementDetectionData.elementBreakdown.cast && elementDetectionData.elementBreakdown.cast.length > 0 && (
+                <div>
+                  <div className="text-md font-medium text-gray-800 mb-3">Detailed Cast Analysis ({elementDetectionData.elementBreakdown.cast.length})</div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 max-h-64 overflow-y-auto">
+                    {elementDetectionData.elementBreakdown.cast.map((castMember: any, index: number) => (
+                      <div key={index} className="bg-white p-3 rounded-lg shadow-sm border-l-4 border-green-500">
+                        <div className="flex justify-between items-start mb-2">
+                          <div className="font-bold text-gray-900 text-sm">{castMember.name}</div>
+                          <span className={`px-2 py-1 text-xs rounded-full font-medium ${
+                            castMember.importance === 'Principal' || castMember.category === 'Principal' ? 'bg-red-100 text-red-800' :
+                            castMember.importance === 'Supporting' || castMember.category === 'Supporting' ? 'bg-yellow-100 text-yellow-800' :
+                            'bg-gray-100 text-gray-800'
+                          }`}>
+                            {castMember.category || castMember.importance}
+                          </span>
+                        </div>
+                        <p className="text-xs text-gray-600">Scenes: {castMember.sceneCount || 1}</p>
+                        {castMember.colorCode && (
+                          <p className="text-xs text-gray-500">Color: {castMember.colorCode}</p>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Department Breakdown */}
+          {elementDetectionData.departmentBreakdown && (
+            <div className="mt-6">
+              <div className="text-md font-medium text-gray-800 mb-3">Department Breakdown</div>
+              <div className="space-y-4">
+                {elementDetectionData.departmentBreakdown.map((dept: any, index: number) => (
+                  <div key={index} className="bg-white p-4 rounded-lg shadow-sm border-l-4 border-green-500">
+                    <div className="flex justify-between items-start mb-3">
+                      <div className="font-bold text-gray-900">{dept.department}</div>
+                      <div className="flex gap-2">
+                        <span className={`px-2 py-1 text-xs rounded-full font-medium ${
+                          dept.complexity === 'HIGH' ? 'bg-red-100 text-red-800' :
+                          dept.complexity === 'MEDIUM' ? 'bg-yellow-100 text-yellow-800' :
+                          'bg-green-100 text-green-800'
+                        }`}>
+                          {dept.complexity}
+                        </span>
+                        <span className="px-2 py-1 text-xs rounded-full bg-blue-100 text-blue-800 font-medium">
+                          {dept.budget} Budget
+                        </span>
+                      </div>
+                    </div>
+                    <p className="text-sm text-gray-600 mb-2">Elements: {dept.elements?.length || 0}</p>
+                    {dept.specialRequirements && dept.specialRequirements.length > 0 && (
+                      <div>
+                        <p className="text-xs font-medium text-gray-700 mb-1">Special Requirements:</p>
+                        <ul className="text-xs text-gray-600 space-y-1">
+                          {dept.specialRequirements.slice(0, 3).map((req: string, i: number) => (
+                            <li key={i}>• {req}</li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Categorization Agent Results */}
+      {categorizationData && (
+        <div className="bg-gradient-to-r from-orange-50 to-amber-50 p-6 rounded-lg border">
+          <h6 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+            <Building className="w-5 h-5 text-orange-600 mr-2" />
+            Categorization Agent Results
+          </h6>
+          
+          {/* Department Analysis */}
+          {categorizationData.departmentAnalysis && (
+            <div className="mb-6">
+              <div className="text-md font-medium text-gray-800 mb-3">Department Analysis</div>
+              <div className="space-y-4 max-h-64 overflow-y-auto">
+                {categorizationData.departmentAnalysis.map((dept: any, index: number) => (
+                  <div key={index} className="bg-white p-4 rounded-lg shadow-sm border-l-4 border-orange-500">
+                    <div className="flex justify-between items-start mb-3">
+                      <div className="font-bold text-gray-900">{dept.name}</div>
+                      <div className="flex gap-2">
+                        <span className={`px-2 py-1 text-xs rounded-full font-medium ${
+                          dept.complexity === 'HIGH' ? 'bg-red-100 text-red-800' :
+                          dept.complexity === 'MEDIUM' ? 'bg-yellow-100 text-yellow-800' :
+                          'bg-green-100 text-green-800'
+                        }`}>
+                          {dept.complexity}
+                        </span>
+                        <span className="px-2 py-1 text-xs rounded-full bg-blue-100 text-blue-800 font-medium">
+                          {dept.budget}
+                        </span>
+                      </div>
+                    </div>
+                    <div className="mb-2">
+                      <p className="text-sm text-gray-600 mb-1">Budget: <span className="font-medium">{dept.budget}</span></p>
+                      <p className="text-sm text-gray-600">Prep Time: <span className="font-medium">{dept.prepTime}</span></p>
+                    </div>
+                    {dept.keyRequirements && dept.keyRequirements.length > 0 && (
+                      <div className="mb-2">
+                        <p className="text-xs font-medium text-gray-700 mb-1">Key Requirements:</p>
+                        <ul className="text-xs text-gray-600 space-y-1">
+                          {dept.keyRequirements.slice(0, 3).map((req: string, i: number) => (
+                            <li key={i}>• {req}</li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+                    {dept.riskFactors && dept.riskFactors.length > 0 && (
+                      <div>
+                        <p className="text-xs font-medium text-red-700 mb-1">Risk Factors:</p>
+                        <ul className="text-xs text-red-600 space-y-1">
+                          {dept.riskFactors.slice(0, 2).map((risk: string, i: number) => (
+                            <li key={i}>• {risk}</li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Timeline */}
+          {categorizationData.timeline && (
+            <div className="mb-6">
+              <div className="text-md font-medium text-gray-800 mb-3">Production Timeline</div>
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <div className="bg-white p-4 rounded-lg shadow-sm">
+                  <p className="text-sm font-medium text-gray-600">Pre-Production</p>
+                  <p className="text-xl font-bold text-orange-600">{categorizationData.timeline.preProduction}</p>
+                </div>
+                <div className="bg-white p-4 rounded-lg shadow-sm">
+                  <p className="text-sm font-medium text-gray-600">Production</p>
+                  <p className="text-xl font-bold text-blue-600">{categorizationData.timeline.production}</p>
+                </div>
+                <div className="bg-white p-4 rounded-lg shadow-sm">
+                  <p className="text-sm font-medium text-gray-600">Post-Production</p>
+                  <p className="text-xl font-bold text-green-600">{categorizationData.timeline.postProduction}</p>
+                </div>
+                <div className="bg-white p-4 rounded-lg shadow-sm">
+                  <p className="text-sm font-medium text-gray-600">Total Duration</p>
+                  <p className="text-xl font-bold text-purple-600">{categorizationData.timeline.totalDuration}</p>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Budget Analysis */}
+          {categorizationData.budget && (
+            <div>
+              <div className="text-md font-medium text-gray-800 mb-3">Budget Analysis</div>
+              <div className="bg-white p-4 rounded-lg shadow-sm">
+                <div className="flex justify-between items-center mb-4 pb-4 border-b">
+                  <span className="text-lg font-bold text-gray-900">Total Budget</span>
+                  <span className="text-2xl font-bold text-orange-600">{categorizationData.budget.total}</span>
+                </div>
+                {categorizationData.budget.breakdown && (
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                    {Object.entries(categorizationData.budget.breakdown).map(([category, amount]) => (
+                      <div key={category} className="flex justify-between py-2 px-3 bg-gray-50 rounded">
+                        <span className="capitalize text-sm font-medium">{category}:</span>
+                        <span className="text-sm font-bold">{String(amount)}</span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+                {categorizationData.budget.contingency && (
+                  <div className="mt-4 pt-4 border-t flex justify-between items-center">
+                    <span className="font-medium text-gray-700">Contingency:</span>
+                    <span className="font-bold text-green-600">{categorizationData.budget.contingency}</span>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Report Generator Agent Results */}
+      {reportGeneratorData && (
+        <div className="bg-gradient-to-r from-purple-50 to-pink-50 p-6 rounded-lg border">
+          <h6 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+            <FileText className="w-5 h-5 text-purple-600 mr-2" />
+            Report Generator Agent Results
+          </h6>
+          
+          {/* Executive Summary */}
+          {reportGeneratorData.executiveSummary && (
+            <div className="mb-6">
+              <div className="text-md font-medium text-gray-800 mb-3">Executive Summary</div>
+              <div className="bg-white p-4 rounded-lg shadow-sm space-y-3">
+                <div>
+                  <p className="text-sm font-medium text-gray-700 mb-1">Project Overview:</p>
+                  <p className="text-sm text-gray-600">{reportGeneratorData.executiveSummary.projectOverview}</p>
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-gray-700 mb-1">Key Findings:</p>
+                  <p className="text-sm text-gray-600">{reportGeneratorData.executiveSummary.keyFindings}</p>
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-gray-700 mb-1">Budget Highlights:</p>
+                  <p className="text-sm text-gray-600">{reportGeneratorData.executiveSummary.budgetHighlights}</p>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Recommendations */}
+          {reportGeneratorData.recommendations && (
+            <div className="mb-6">
+              <div className="text-md font-medium text-gray-800 mb-3">Recommendations</div>
+              <div className="space-y-2">
+                {reportGeneratorData.recommendations.map((rec: string, index: number) => (
+                  <div key={index} className="bg-white p-3 rounded-lg shadow-sm border-l-4 border-purple-500">
+                    <p className="text-sm text-gray-700">{rec}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Success Factors */}
+          {reportGeneratorData.successFactors && (
+            <div>
+              <div className="text-md font-medium text-gray-800 mb-3">Success Factors</div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                {reportGeneratorData.successFactors.map((factor: string, index: number) => (
+                  <div key={index} className="bg-white p-3 rounded-lg shadow-sm">
+                    <p className="text-sm text-gray-700 flex items-start">
+                      <CheckCircle className="w-4 h-4 text-green-500 mr-2 mt-0.5 flex-shrink-0" />
+                      {factor}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// UI-Friendly Schedule Display Component - Showing All Schedule Agents Data Separately
+function ScheduleUIDisplay({ result }: { result: ScheduleAnalysisResult }) {
+  const stages = result.stages || {};
+  
+  // Get individual agent data from all schedule agents
+  const blockOptimizerData = (stages as any).blockOptimizer?.data;
+  const locationManagerData = (stages as any).locationManager?.data;
+  const moveCalculatorData = (stages as any).moveCalculator?.data;
+  const complianceValidatorData = (stages as any).complianceValidator?.data;
+  const stripboardGeniusData = (stages as any).stripboardGenius?.data || (stages as any).stripboardGeniusAgent?.data;
+  
+  return (
+    <div className="space-y-8">
+      
+      {/* Block Optimizer Agent Results */}
+      {blockOptimizerData && (
+        <div className="bg-gradient-to-r from-blue-50 to-indigo-50 p-6 rounded-lg border">
+          <h6 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+            <Settings className="w-5 h-5 text-blue-600 mr-2" />
+            Block Optimizer Agent Results
+          </h6>
+          
+          {/* Day Blocks */}
+          {blockOptimizerData.dayBlocks && Array.isArray(blockOptimizerData.dayBlocks) && (
+            <div className="mb-6">
+              <div className="text-md font-medium text-gray-800 mb-3">Day Blocks ({blockOptimizerData.dayBlocks.length})</div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {blockOptimizerData.dayBlocks.map((block: any, index: number) => (
+                  <div key={index} className="bg-white p-4 rounded-lg shadow-sm border-l-4 border-yellow-500">
+                    <div className="flex items-center justify-between mb-2">
+                      <div className="font-bold text-gray-900">{block.blockId}</div>
+                      <span className="text-xs px-2 py-1 bg-yellow-100 text-yellow-800 rounded-full">
+                        {block.estimatedDuration} min
+                      </span>
+                    </div>
+                    <p className="text-sm text-gray-600 mb-2">📍 {block.location}</p>
+                    <div className="text-xs text-gray-600">
+                      <p className="font-medium mb-1">Scenes:</p>
+                      <ul className="list-disc pl-4 space-y-1">
+                        {block.scenes.map((scene: string, i: number) => (
+                          <li key={i}>{scene}</li>
+                        ))}
+                      </ul>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Night Blocks */}
+          {blockOptimizerData.nightBlocks && Array.isArray(blockOptimizerData.nightBlocks) && (
+            <div className="mb-6">
+              <div className="text-md font-medium text-gray-800 mb-3">Night Blocks ({blockOptimizerData.nightBlocks.length})</div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {blockOptimizerData.nightBlocks.map((block: any, index: number) => (
+                  <div key={index} className="bg-white p-4 rounded-lg shadow-sm border-l-4 border-indigo-500">
+                    <div className="flex items-center justify-between mb-2">
+                      <div className="font-bold text-gray-900">{block.blockId}</div>
+                      <span className="text-xs px-2 py-1 bg-indigo-100 text-indigo-800 rounded-full">
+                        {block.estimatedDuration} min
+                      </span>
+                    </div>
+                    <p className="text-sm text-gray-600 mb-2">🌙 {block.location}</p>
+                    <div className="text-xs text-gray-600">
+                      <p className="font-medium mb-1">Scenes:</p>
+                      <ul className="list-disc pl-4 space-y-1">
+                        {block.scenes.map((scene: string, i: number) => (
+                          <li key={i}>{scene}</li>
+                        ))}
+                      </ul>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Optimization Summary */}
+          {blockOptimizerData.optimization && (
+            <div>
+              <div className="text-md font-medium text-gray-800 mb-3">Optimization Results</div>
+              <div className="bg-white p-4 rounded-lg shadow-sm">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div className="text-center">
+                    <p className="text-sm font-medium text-gray-600">Total Days</p>
+                    <p className="text-2xl font-bold text-blue-600">{blockOptimizerData.optimization.totalDays}</p>
+                  </div>
+                  <div className="text-center">
+                    <p className="text-sm font-medium text-gray-600">Efficiency</p>
+                    <p className="text-2xl font-bold text-green-600">{(blockOptimizerData.optimization.efficiency * 100).toFixed(1)}%</p>
+                  </div>
+                  <div className="text-center">
+                    <p className="text-sm font-medium text-gray-600">Cost Savings</p>
+                    <p className="text-lg font-bold text-orange-600">{blockOptimizerData.optimization.costSavings}</p>
+                  </div>
+                </div>
+                <div className="mt-4 flex items-center justify-center">
+                  <div className="flex items-center">
+                    <div className="w-24 bg-gray-200 rounded-full h-2 mr-2">
+                      <div 
+                        className="bg-blue-600 h-2 rounded-full" 
+                        style={{ width: `${(blockOptimizerData.confidence * 100)}%` }}
+                      ></div>
+                    </div>
+                    <span className="text-sm font-bold text-blue-600">
+                      Confidence: {(blockOptimizerData.confidence * 100).toFixed(0)}%
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Location Manager Agent Results */}
+      {locationManagerData && (
+        <div className="bg-gradient-to-r from-green-50 to-emerald-50 p-6 rounded-lg border">
+          <h6 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+            <MapPin className="w-5 h-5 text-green-600 mr-2" />
+            Location Manager Agent Results
+          </h6>
+          
+          {/* Location Groups */}
+          {locationManagerData.locationGroups && Array.isArray(locationManagerData.locationGroups) && (
+            <div className="mb-6">
+              <div className="text-md font-medium text-gray-800 mb-3">Location Groups ({locationManagerData.locationGroups.length})</div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {locationManagerData.locationGroups.map((group: any, index: number) => (
+                  <div key={index} className="bg-white p-4 rounded-lg shadow-sm border-l-4 border-green-500">
+                    <div className="flex items-center justify-between mb-2">
+                      <div className="font-bold text-gray-900">{group.groupId}</div>
+                      <span className={`text-xs px-2 py-1 rounded-full font-medium ${
+                        group.complexity === 'HIGH' ? 'bg-red-100 text-red-800' :
+                        group.complexity === 'MEDIUM' ? 'bg-yellow-100 text-yellow-800' :
+                        'bg-green-100 text-green-800'
+                      }`}>
+                        {group.complexity}
+                      </span>
+                    </div>
+                    <p className="text-sm text-gray-600 mb-2">📍 {group.location}</p>
+                    <p className="text-sm text-gray-600 mb-2">🚗 Travel: {group.travelTime} mins</p>
+                    <div className="text-xs text-gray-600">
+                      <p className="font-medium mb-1">Scenes:</p>
+                      <ul className="list-disc pl-4 space-y-1">
+                        {group.scenes.map((scene: string, i: number) => (
+                          <li key={i}>{scene}</li>
+                        ))}
+                      </ul>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Travel Plan */}
+          {locationManagerData.travelPlan && (
+            <div>
+              <div className="text-md font-medium text-gray-800 mb-3">Travel Plan</div>
+              <div className="bg-white p-4 rounded-lg shadow-sm">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                  <div className="text-center">
+                    <p className="text-sm font-medium text-gray-600">Total Locations</p>
+                    <p className="text-2xl font-bold text-green-600">{locationManagerData.travelPlan.totalLocations}</p>
+                  </div>
+                  <div className="text-center">
+                    <p className="text-sm font-medium text-gray-600">Total Travel Time</p>
+                    <p className="text-2xl font-bold text-blue-600">{locationManagerData.travelPlan.totalTravelTime} mins</p>
+                  </div>
+                  <div className="text-center">
+                    <p className="text-sm font-medium text-gray-600">Confidence</p>
+                    <p className="text-2xl font-bold text-orange-600">{(locationManagerData.confidence * 100).toFixed(0)}%</p>
+                  </div>
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-gray-700 mb-2">Recommended Sequence:</p>
+                  <div className="flex flex-wrap gap-2">
+                    {locationManagerData.travelPlan.recommendedSequence.map((location: string, index: number) => (
+                      <span key={index} className="px-3 py-1 bg-green-100 text-green-800 rounded-full text-sm">
+                        {index + 1}. {location}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Move Calculator Agent Results */}
+      {moveCalculatorData && (
+        <div className="bg-gradient-to-r from-orange-50 to-amber-50 p-6 rounded-lg border">
+          <h6 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+            <Car className="w-5 h-5 text-orange-600 mr-2" />
+            Move Calculator Agent Results
+          </h6>
+          
+          {/* Individual Moves */}
+          {moveCalculatorData.moves && Array.isArray(moveCalculatorData.moves) && (
+            <div className="mb-6">
+              <div className="text-md font-medium text-gray-800 mb-3">Equipment Moves ({moveCalculatorData.moves.length})</div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-h-64 overflow-y-auto">
+                {moveCalculatorData.moves.map((move: any, index: number) => (
+                  <div key={index} className="bg-white p-4 rounded-lg shadow-sm border-l-4 border-orange-500">
+                    <div className="flex items-center justify-between mb-2">
+                      <div className="font-bold text-gray-900">{move.moveId}</div>
+                      <div className="flex gap-2">
+                        <span className="text-xs px-2 py-1 bg-orange-100 text-orange-800 rounded-full">
+                          {move.duration}h
+                        </span>
+                        <span className="text-xs px-2 py-1 bg-green-100 text-green-800 rounded-full">
+                          {move.cost}
+                        </span>
+                      </div>
+                    </div>
+                    <p className="text-sm text-gray-600 mb-1">📍 From: {move.fromLocation}</p>
+                    <p className="text-sm text-gray-600 mb-2">📍 To: {move.toLocation}</p>
+                    <div className="text-xs text-gray-600">
+                      <p className="font-medium mb-1">Equipment:</p>
+                      <div className="flex flex-wrap gap-1">
+                        {move.equipment.map((item: string, i: number) => (
+                          <span key={i} className="px-2 py-1 bg-gray-100 text-gray-700 rounded text-xs">
+                            {item}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Move Summary */}
+          {moveCalculatorData.summary && (
+            <div>
+              <div className="text-md font-medium text-gray-800 mb-3">Move Summary</div>
+              <div className="bg-white p-4 rounded-lg shadow-sm">
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                  <div className="text-center">
+                    <p className="text-sm font-medium text-gray-600">Total Moves</p>
+                    <p className="text-2xl font-bold text-orange-600">{moveCalculatorData.summary.totalMoves}</p>
+                  </div>
+                  <div className="text-center">
+                    <p className="text-sm font-medium text-gray-600">Total Time</p>
+                    <p className="text-2xl font-bold text-blue-600">{moveCalculatorData.summary.totalMoveTime}h</p>
+                  </div>
+                  <div className="text-center">
+                    <p className="text-sm font-medium text-gray-600">Total Cost</p>
+                    <p className="text-2xl font-bold text-green-600">{moveCalculatorData.summary.totalCost}</p>
+                  </div>
+                  <div className="text-center">
+                    <p className="text-sm font-medium text-gray-600">Efficiency</p>
+                    <p className="text-2xl font-bold text-purple-600">{(moveCalculatorData.summary.efficiency * 100).toFixed(0)}%</p>
+                  </div>
+                </div>
+                <div className="mt-4 flex items-center justify-center">
+                  <div className="flex items-center">
+                    <div className="w-24 bg-gray-200 rounded-full h-2 mr-2">
+                      <div 
+                        className="bg-orange-600 h-2 rounded-full" 
+                        style={{ width: `${(moveCalculatorData.confidence * 100)}%` }}
+                      ></div>
+                    </div>
+                    <span className="text-sm font-bold text-orange-600">
+                      Confidence: {(moveCalculatorData.confidence * 100).toFixed(0)}%
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Compliance Validator Agent Results */}
+      {complianceValidatorData && (
+        <div className="bg-gradient-to-r from-purple-50 to-pink-50 p-6 rounded-lg border">
+          <h6 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+            <CheckCircle className="w-5 h-5 text-purple-600 mr-2" />
+            Compliance Validator Agent Results
+          </h6>
+          
+          {/* Compliance Report */}
+          {complianceValidatorData.complianceReport && (
+            <div className="mb-6">
+              <div className="text-md font-medium text-gray-800 mb-3">Compliance Status</div>
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <div className="bg-white p-4 rounded-lg shadow-sm text-center">
+                  <div className={`text-2xl mb-2 ${complianceValidatorData.complianceReport.sagCompliance ? 'text-green-600' : 'text-red-600'}`}>
+                    {complianceValidatorData.complianceReport.sagCompliance ? '✅' : '❌'}
+                  </div>
+                  <p className="text-sm font-medium text-gray-600">SAG Compliance</p>
+                </div>
+                <div className="bg-white p-4 rounded-lg shadow-sm text-center">
+                  <div className={`text-2xl mb-2 ${complianceValidatorData.complianceReport.crewCompliance ? 'text-green-600' : 'text-red-600'}`}>
+                    {complianceValidatorData.complianceReport.crewCompliance ? '✅' : '❌'}
+                  </div>
+                  <p className="text-sm font-medium text-gray-600">Crew Compliance</p>
+                </div>
+                <div className="bg-white p-4 rounded-lg shadow-sm text-center">
+                  <div className={`text-2xl mb-2 ${complianceValidatorData.complianceReport.safetyCompliance ? 'text-green-600' : 'text-red-600'}`}>
+                    {complianceValidatorData.complianceReport.safetyCompliance ? '✅' : '❌'}
+                  </div>
+                  <p className="text-sm font-medium text-gray-600">Safety Compliance</p>
+                </div>
+                <div className="bg-white p-4 rounded-lg shadow-sm text-center">
+                  <div className={`text-2xl font-bold mb-2 ${
+                    complianceValidatorData.complianceReport.overtimeRisk === 'LOW' ? 'text-green-600' :
+                    complianceValidatorData.complianceReport.overtimeRisk === 'MEDIUM' ? 'text-yellow-600' :
+                    'text-red-600'
+                  }`}>
+                    {complianceValidatorData.complianceReport.overtimeRisk}
+                  </div>
+                  <p className="text-sm font-medium text-gray-600">Overtime Risk</p>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Violations */}
+          {complianceValidatorData.violations && complianceValidatorData.violations.length > 0 ? (
+            <div className="mb-6">
+              <div className="text-md font-medium text-gray-800 mb-3">Violations</div>
+              <div className="space-y-2">
+                {complianceValidatorData.violations.map((violation: string, index: number) => (
+                  <div key={index} className="bg-red-50 p-3 rounded-lg border-l-4 border-red-500">
+                    <p className="text-sm text-red-700">⚠️ {violation}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ) : (
+            <div className="mb-6">
+              <div className="bg-green-50 p-4 rounded-lg border-l-4 border-green-500">
+                <p className="text-sm text-green-700 font-medium">✅ No violations found</p>
+              </div>
+            </div>
+          )}
+
+          {/* Recommendations */}
+          {complianceValidatorData.recommendations && (
+            <div>
+              <div className="text-md font-medium text-gray-800 mb-3">Recommendations</div>
+              <div className="space-y-2">
+                {complianceValidatorData.recommendations.map((rec: string, index: number) => (
+                  <div key={index} className="bg-white p-3 rounded-lg shadow-sm border-l-4 border-purple-500">
+                    <p className="text-sm text-gray-700">💡 {rec}</p>
+                  </div>
+                ))}
+              </div>
+              <div className="mt-4 flex items-center justify-center">
+                <div className="flex items-center">
+                  <div className="w-24 bg-gray-200 rounded-full h-2 mr-2">
+                    <div 
+                      className="bg-purple-600 h-2 rounded-full" 
+                      style={{ width: `${(complianceValidatorData.confidence * 100)}%` }}
+                    ></div>
+                  </div>
+                  <span className="text-sm font-bold text-purple-600">
+                    Confidence: {(complianceValidatorData.confidence * 100).toFixed(0)}%
+                  </span>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Stripboard Genius Agent Results */}
+      {stripboardGeniusData && (
+        <div className="bg-gradient-to-r from-red-50 to-rose-50 p-6 rounded-lg border">
+          <h6 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+            <Calendar className="w-5 h-5 text-red-600 mr-2" />
+            Stripboard Genius Agent Results
+          </h6>
+          
+          {/* Final Schedule Overview */}
+          {stripboardGeniusData.finalSchedule && (
+            <div className="mb-6">
+              <div className="text-md font-medium text-gray-800 mb-3">Final Schedule Overview</div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                <div className="bg-white p-4 rounded-lg shadow-sm text-center">
+                  <p className="text-sm font-medium text-gray-600">Total Days</p>
+                  <p className="text-3xl font-bold text-red-600">{stripboardGeniusData.finalSchedule.totalDays}</p>
+                </div>
+                <div className="bg-white p-4 rounded-lg shadow-sm text-center">
+                  <p className="text-sm font-medium text-gray-600">Shooting Blocks</p>
+                  <p className="text-3xl font-bold text-blue-600">{stripboardGeniusData.finalSchedule.shootingBlocks.length}</p>
+                </div>
+              </div>
+              
+              {/* Budget Breakdown */}
+              {stripboardGeniusData.finalSchedule.budget && (
+                <div className="bg-white p-4 rounded-lg shadow-sm">
+                  <div className="flex justify-between items-center mb-4 pb-4 border-b">
+                    <span className="text-lg font-bold text-gray-900">Estimated Budget</span>
+                    <span className="text-2xl font-bold text-red-600">{stripboardGeniusData.finalSchedule.budget.estimated}</span>
+                  </div>
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                    {Object.entries(stripboardGeniusData.finalSchedule.budget.breakdown).map(([category, amount]) => (
+                      <div key={category} className="flex justify-between py-2 px-3 bg-gray-50 rounded">
+                        <span className="capitalize text-sm font-medium">{category}:</span>
+                        <span className="text-sm font-bold">{String(amount)}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Summary and Metrics */}
+          {stripboardGeniusData.summary && (
+            <div className="mb-6">
+              <div className="text-md font-medium text-gray-800 mb-3">Key Metrics</div>
+              <div className="bg-white p-4 rounded-lg shadow-sm">
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
+                  <div className="text-center">
+                    <p className="text-sm font-medium text-gray-600">Efficiency</p>
+                    <p className="text-2xl font-bold text-green-600">{(stripboardGeniusData.summary.efficiency * 100).toFixed(0)}%</p>
+                  </div>
+                  <div className="text-center">
+                    <p className="text-sm font-medium text-gray-600">Risk Level</p>
+                    <p className={`text-2xl font-bold ${
+                      stripboardGeniusData.summary.riskLevel === 'LOW' ? 'text-green-600' :
+                      stripboardGeniusData.summary.riskLevel === 'MEDIUM' ? 'text-yellow-600' :
+                      'text-red-600'
+                    }`}>
+                      {stripboardGeniusData.summary.riskLevel}
+                    </p>
+                  </div>
+                  <div className="text-center">
+                    <p className="text-sm font-medium text-gray-600">Night Shoots</p>
+                    <p className="text-2xl font-bold text-indigo-600">{stripboardGeniusData.summary.keyMetrics.nightShoots}</p>
+                  </div>
+                  <div className="text-center">
+                    <p className="text-sm font-medium text-gray-600">Company Moves</p>
+                    <p className="text-2xl font-bold text-orange-600">{stripboardGeniusData.summary.keyMetrics.companyMoves}</p>
+                  </div>
+                </div>
+                
+                {/* Additional Metrics */}
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                  <div className="text-center">
+                    <p className="text-sm font-medium text-gray-600">Avg Scenes/Day</p>
+                    <p className="text-lg font-bold text-purple-600">{stripboardGeniusData.summary.keyMetrics.avgScenesPerDay}</p>
+                  </div>
+                  <div className="text-center">
+                    <p className="text-sm font-medium text-gray-600">Crew Size</p>
+                    <p className="text-lg font-bold text-teal-600">{stripboardGeniusData.summary.keyMetrics.crewSize}</p>
+                  </div>
+                  <div className="text-center">
+                    <p className="text-sm font-medium text-gray-600">Risk Score</p>
+                    <p className="text-lg font-bold text-red-600">{stripboardGeniusData.summary.keyMetrics.riskScore}/10</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Recommendations */}
+          {stripboardGeniusData.summary?.recommendations && (
+            <div>
+              <div className="text-md font-medium text-gray-800 mb-3">Recommendations</div>
+              <div className="space-y-2 max-h-48 overflow-y-auto">
+                {stripboardGeniusData.summary.recommendations.map((rec: string, index: number) => (
+                  <div key={index} className="bg-white p-3 rounded-lg shadow-sm border-l-4 border-red-500">
+                    <p className="text-sm text-gray-700">💡 {rec}</p>
+                  </div>
+                ))}
+              </div>
+              <div className="mt-4 flex items-center justify-center">
+                <div className="flex items-center">
+                  <div className="w-24 bg-gray-200 rounded-full h-2 mr-2">
+                    <div 
+                      className="bg-red-600 h-2 rounded-full" 
+                      style={{ width: `${(stripboardGeniusData.confidence * 100)}%` }}
+                    ></div>
+                  </div>
+                  <span className="text-sm font-bold text-red-600">
+                    Confidence: {(stripboardGeniusData.confidence * 100).toFixed(0)}%
+                  </span>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+      
     </div>
   );
 }
