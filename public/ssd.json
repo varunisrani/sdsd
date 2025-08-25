@@ -1,0 +1,41 @@
+{
+    "success": true,
+    "data": {
+        "scriptName": "Black Panther Script Sample",
+        "genre": "Action/Superhero",
+        "type": "Feature Film", 
+        "budgetLevel": "High",
+        "scenes": [
+            {
+                "sceneNumber": 1,
+                "Scene_Names": "EXT. DEEP SPACE",
+                "Scene_action": "A dark screen is lit up by twinkling stars. Narrative begins about Wakanda's origin.",
+                "Scene_Characters": ["SON", "FATHER"],
+                "Scene_Dialogue": null,
+                "Contents": "A dark screen is lit up by twinkling stars. A meteorite made of vibranium strikes Africa, affecting plant life. The story of five tribes and the first Black Panther unfolds.",
+                "location": "DEEP SPACE",
+                "timeOfDay": "UNSPECIFIED"
+            },
+            {
+                "sceneNumber": 2,
+                "Scene_Names": "EXT. LAKE MERRITT APARTMENT COMPLEX - OAKLAND - NIGHT - 1992",
+                "Scene_action": "Towering apartment buildings loom over the horizon. Kids play pickup basketball when mysterious lights approach from the sky.",
+                "Scene_Characters": [],
+                "Scene_Dialogue": null,
+                "Contents": "Towering apartment buildings loom over the horizon. Kids play pickup basketball on a milk carton hoop when mysterious lights approach from the sky.",
+                "location": "LAKE MERRITT APARTMENT COMPLEX",
+                "timeOfDay": "NIGHT"
+            },
+            {
+                "sceneNumber": 3,
+                "Scene_Names": "INT. N'JOBU'S APARTMENT - HALLWAY - NIGHT",
+                "Scene_action": "N'Jobu sorts through firearms and goes over maps with James. News footage of LA Riots plays. Dora Milaje arrive.",
+                "Scene_Characters": ["N'JOBU", "JAMES", "DORA MILAJE"],
+                "Scene_Dialogue": null,
+                "Contents": "An African man, N'JOBU sorts through firearms and goes over maps with another man, JAMES. Live news footage of the 1992 Los Angeles Riots plays. Two Dora Milaje enter carrying large spears.",
+                "location": "N'JOBU'S APARTMENT",
+                "timeOfDay": "NIGHT"
+            }
+        ]
+    }
+}
