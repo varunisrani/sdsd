@@ -4,7 +4,7 @@
  */
 
 import { google } from '@ai-sdk/google';
-import { generateObject, generateText } from 'ai';
+import { generateObject } from 'ai';
 import { z } from 'zod';
 
 export interface ScheduleAgentConfig {
@@ -220,9 +220,7 @@ export class ScheduleAnalysisService {
 
       console.log('📅 Schedule Analysis - Using API key:', apiKey.substring(0, 10) + '...');
 
-      const model = google('gemini-2.5-flash', {
-        apiKey: apiKey
-      });
+      const model = google('gemini-2.5-flash');
 
       // Convert SSD scenes to schedule format (first 20 scenes like in working test)
       const convertedScenes = scriptData?.data?.scenes.slice(0, 20).map((scene, index) => ({
@@ -734,7 +732,7 @@ Generate comprehensive shooting schedule with budget estimates, risk assessment,
 
   // Helper functions to extract information from scene content
   private extractProps(content: string): string[] {
-    const props = [];
+    const props: string[] = [];
     const propKeywords = ['gun', 'weapon', 'car', 'phone', 'briefcase', 'computer', 'sword', 'helmet', 'armor'];
     const lowerContent = content.toLowerCase();
     
@@ -748,7 +746,7 @@ Generate comprehensive shooting schedule with budget estimates, risk assessment,
   }
 
   private extractEquipment(content: string): string[] {
-    const equipment = [];
+    const equipment: string[] = [];
     const equipKeywords = ['camera', 'lighting', 'crane', 'steadicam', 'boom', 'harness'];
     const lowerContent = content.toLowerCase();
     
@@ -762,7 +760,7 @@ Generate comprehensive shooting schedule with budget estimates, risk assessment,
   }
 
   private extractVFX(content: string): string[] {
-    const vfx = [];
+    const vfx: string[] = [];
     const vfxKeywords = ['explosion', 'fire', 'magic', 'digital', 'cgi', 'effects'];
     const lowerContent = content.toLowerCase();
     
@@ -776,7 +774,7 @@ Generate comprehensive shooting schedule with budget estimates, risk assessment,
   }
 
   private extractStunts(content: string): string[] {
-    const stunts = [];
+    const stunts: string[] = [];
     const stuntKeywords = ['fight', 'chase', 'jump', 'fall', 'crash', 'battle'];
     const lowerContent = content.toLowerCase();
     
@@ -790,7 +788,7 @@ Generate comprehensive shooting schedule with budget estimates, risk assessment,
   }
 
   private extractVehicles(content: string): string[] {
-    const vehicles = [];
+    const vehicles: string[] = [];
     const vehicleKeywords = ['car', 'truck', 'motorcycle', 'plane', 'helicopter', 'ship'];
     const lowerContent = content.toLowerCase();
     
@@ -1024,9 +1022,9 @@ export class ScriptDataUtils {
     complexityScore: number;
   } {
     const scenes = scriptData?.data?.scenes;
-    const locations = [...new Set(scenes.map(s => s.location).filter(Boolean))];
-    const characters = [...new Set(scenes.flatMap(s => s.Scene_Characters || []))];
-    const timeOfDays = [...new Set(scenes.map(s => s.timeOfDay).filter(Boolean))];
+    const locations = [...new Set(scenes.map(s => s.location).filter(Boolean))] as string[];
+    const characters = [...new Set(scenes.flatMap(s => s.Scene_Characters || []))] as string[];
+    const timeOfDays = [...new Set(scenes.map(s => s.timeOfDay).filter(Boolean))] as string[];
     
     // Calculate complexity based on various factors
     let complexityScore = 0;

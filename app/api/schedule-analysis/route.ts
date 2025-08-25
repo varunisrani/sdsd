@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { google } from '@ai-sdk/google';
-import { generateObject, generateText } from 'ai';
+import { generateObject } from 'ai';
 import { z } from 'zod';
 
 interface ScriptData {
@@ -32,9 +32,7 @@ export async function POST(request: NextRequest) {
     const startTime = Date.now();
     
     // Initialize AI model
-    const model = google('gemini-2.5-flash', {
-      apiKey: apiKey
-    });
+    const model = google('gemini-2.5-flash');
 
     // Convert SSD scenes to schedule format (first 20 scenes)
     const convertedScenes = scriptData.data.scenes.slice(0, 20).map((scene, index) => ({
@@ -421,7 +419,7 @@ Generate comprehensive shooting schedule with budget estimates, risk assessment,
 
 // Helper functions to extract information from scene content
 function extractProps(content: string): string[] {
-  const props = [];
+  const props: string[] = [];
   const propKeywords = ['gun', 'weapon', 'car', 'phone', 'briefcase', 'computer', 'sword', 'helmet', 'armor'];
   const lowerContent = content.toLowerCase();
   
@@ -435,7 +433,7 @@ function extractProps(content: string): string[] {
 }
 
 function extractEquipment(content: string): string[] {
-  const equipment = [];
+  const equipment: string[] = [];
   const equipKeywords = ['camera', 'lighting', 'crane', 'steadicam', 'boom', 'harness'];
   const lowerContent = content.toLowerCase();
   
@@ -449,7 +447,7 @@ function extractEquipment(content: string): string[] {
 }
 
 function extractVFX(content: string): string[] {
-  const vfx = [];
+  const vfx: string[] = [];
   const vfxKeywords = ['explosion', 'fire', 'magic', 'digital', 'cgi', 'effects'];
   const lowerContent = content.toLowerCase();
   
@@ -463,7 +461,7 @@ function extractVFX(content: string): string[] {
 }
 
 function extractStunts(content: string): string[] {
-  const stunts = [];
+  const stunts: string[] = [];
   const stuntKeywords = ['fight', 'chase', 'jump', 'fall', 'crash', 'battle'];
   const lowerContent = content.toLowerCase();
   
@@ -477,7 +475,7 @@ function extractStunts(content: string): string[] {
 }
 
 function extractVehicles(content: string): string[] {
-  const vehicles = [];
+  const vehicles: string[] = [];
   const vehicleKeywords = ['car', 'truck', 'motorcycle', 'plane', 'helicopter', 'ship'];
   const lowerContent = content.toLowerCase();
   

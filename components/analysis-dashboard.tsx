@@ -15,10 +15,7 @@ import {
   RefreshCw,
   Film,
   Target,
-  Layers,
   Calendar,
-  MapPin,
-  Truck,
   Database,
   Trash2,
   Eye
@@ -166,7 +163,7 @@ export function AnalysisDashboard({ className = '' }: AnalysisDashboardProps) {
         : analysisType === 'script'
         ? await ScriptDataUtils.getDefaultSSDData()
         : await ScheduleUtils.getDefaultSSDData();
-      setCurrentScript(defaultData);
+      setCurrentScript(defaultData as any);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load default script');
     }
@@ -184,7 +181,7 @@ export function AnalysisDashboard({ className = '' }: AnalysisDashboardProps) {
         : analysisType === 'script'
         ? await ScriptDataUtils.loadSSDFile(file)
         : await ScheduleUtils.loadSSDFile(file);
-      setCurrentScript(scriptData);
+      setCurrentScript(scriptData as any);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load script file');
     }
@@ -372,7 +369,7 @@ export function AnalysisDashboard({ className = '' }: AnalysisDashboardProps) {
   const handleExportBudgetAnalysis = () => {
     if (budgetResult) {
       const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
-      const projectName = budgetResult.finalBudget?.projectName || 'Budget-Analysis';
+      const projectName = 'Budget-Analysis';
       downloadJSON(budgetResult, `${projectName}_Budget-Analysis_${timestamp}.json`);
     }
   };
@@ -380,7 +377,7 @@ export function AnalysisDashboard({ className = '' }: AnalysisDashboardProps) {
   const handleExportScheduleAnalysis = () => {
     if (scheduleResult) {
       const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
-      const projectName = scheduleResult.finalSchedule?.projectName || 'Schedule-Analysis';
+      const projectName = 'Schedule-Analysis';
       downloadJSON(scheduleResult, `${projectName}_Schedule-Analysis_${timestamp}.json`);
     }
   };
@@ -404,7 +401,7 @@ export function AnalysisDashboard({ className = '' }: AnalysisDashboardProps) {
         ].filter(Boolean),
         combinedProcessingTime: [scriptResult?.processingTime, budgetResult?.processingTime, scheduleResult?.processingTime]
           .filter(Boolean)
-          .reduce((sum, time) => sum + time, 0)
+          .reduce((sum, time) => (sum || 0) + (time || 0), 0)
       }
     };
 
@@ -470,12 +467,12 @@ export function AnalysisDashboard({ className = '' }: AnalysisDashboardProps) {
         }
       } else if (analysisType === 'script') {
         const service = createScriptService();
-        const result = await service.analyzeScript(currentScript, currentAssets);
+        const result = await service.analyzeScript(currentScript!, currentAssets || undefined);
         setScriptResult(result);
         
         // Save to local storage
         if (result.success) {
-          const projectName = currentScript.data?.scriptName || 'Script Analysis';
+          const projectName = currentScript?.data?.scriptName || 'Script Analysis';
           AnalysisStorageService.saveAnalysis('script', projectName, result);
           setStoredAnalyses(AnalysisStorageService.getStoredAnalyses());
         }
@@ -510,7 +507,7 @@ export function AnalysisDashboard({ className = '' }: AnalysisDashboardProps) {
           sequence: currentSequence
         });
         
-        const result = await service.analyzeScript(scriptForAnalysis, currentShots, currentSequence);
+        const result = await service.analyzeScript(scriptForAnalysis, currentShots || undefined, currentSequence || undefined);
         setScheduleResult(result);
         
         // Save to local storage
@@ -954,7 +951,7 @@ export function AnalysisDashboard({ className = '' }: AnalysisDashboardProps) {
                               <>
                                 <p className="text-xs text-green-700 font-semibold">✓ Schedule Analysis Loaded</p>
                                 <p className="text-xs text-green-600">
-                                  Project: {currentScheduleAnalysis.finalSchedule?.projectName || 'Unknown'}
+                                  Project: {'Unknown'}
                                 </p>
                                 <p className="text-xs text-green-500 mt-1">Click to replace schedule analysis file</p>
                               </>
@@ -1107,8 +1104,8 @@ export function AnalysisDashboard({ className = '' }: AnalysisDashboardProps) {
                           <p><strong>Scenes:</strong> {scriptStats.totalScenes}</p>
                           <p><strong>Characters:</strong> {scriptStats.characters}</p>
                           <p><strong>Locations:</strong> {scriptStats.locations}</p>
-                          <p><strong>Props:</strong> {scriptStats.props}</p>
-                          <p><strong>Vehicles:</strong> {scriptStats.vehicles}</p>
+                          <p><strong>Props:</strong> {(scriptStats as any).props || 'N/A'}</p>
+                          <p><strong>Vehicles:</strong> {(scriptStats as any).vehicles || 'N/A'}</p>
                         </>
                       )}
                     </div>
@@ -1131,7 +1128,7 @@ export function AnalysisDashboard({ className = '' }: AnalysisDashboardProps) {
                       {currentScheduleAnalysis && (
                         <div className="flex items-center">
                           <CheckCircle className="w-4 h-4 text-green-500 mr-2" />
-                          <span><strong>Schedule Analysis:</strong> {currentScheduleAnalysis.finalSchedule?.projectName || 'Loaded'}</span>
+                          <span><strong>Schedule Analysis:</strong> {'Loaded'}</span>
                         </div>
                       )}
                       {currentScriptAnalysis && currentScheduleAnalysis && (

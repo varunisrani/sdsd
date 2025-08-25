@@ -4,7 +4,7 @@
  */
 
 import { google } from '@ai-sdk/google';
-import { generateObject, generateText } from 'ai';
+import { generateObject } from 'ai';
 import { z } from 'zod';
 
 export interface ScriptAgentConfig {
@@ -181,9 +181,7 @@ export class ScriptAnalysisService {
 
       console.log('🎬 Script Analysis - Using API key:', apiKey.substring(0, 10) + '...');
 
-      const model = google('gemini-2.5-flash', {
-        apiKey: apiKey
-      });
+      const model = google('gemini-2.5-flash');
 
       const stages: any = {};
 
@@ -627,7 +625,7 @@ Generate executive-level reporting that provides:
         processingTime: totalProcessingTime,
         stages,
         finalAnalysis
-      };
+      } as any;
       
     } catch (error) {
       return {

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { google } from '@ai-sdk/google';
-import { generateObject, generateText } from 'ai';
+import { generateObject } from 'ai';
 import { z } from 'zod';
 
 interface ScriptData {
@@ -39,9 +39,7 @@ export async function POST(request: NextRequest) {
     const startTime = Date.now();
     
     // Initialize AI model
-    const model = google('gemini-2.5-flash', {
-      apiKey: apiKey
-    });
+    const model = google('gemini-2.5-flash');
 
     const stages: any = {};
 
