@@ -563,34 +563,35 @@ export function AnalysisDashboard({ className = '' }: AnalysisDashboardProps) {
     : ScheduleUtils.getScriptStats(currentScript)) : null;
 
   return (
-    <div className={`min-h-screen bg-gray-50 ${className}`}>
-      {/* Header */}
-      <div className="bg-white shadow-sm border-b">
+    <div className={`min-h-screen bg-gradient-to-br from-background via-background to-secondary/20 ${className}`}>
+      {/* Modern Header with Glass Effect */}
+      <div className="glass sticky top-0 z-50 border-b border-border/50 animate-slideDown">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
           <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-3xl font-bold text-gray-900">Film Production Analysis Dashboard</h1>
-              <p className="mt-1 text-sm text-gray-500">
+            <div className="animate-fadeIn">
+              <h1 className="text-4xl font-bold gradient-text mb-2">Film Production Analysis</h1>
+              <p className="text-sm text-muted-foreground flex items-center gap-2">
+                <span className="inline-block w-2 h-2 bg-success rounded-full animate-pulse"></span>
                 Professional {analysisType} analysis using AI-powered agents
               </p>
             </div>
             <div className="flex items-center gap-4">
-              <div className="flex items-center gap-2">
-                <Settings className="w-4 h-4 text-gray-400" />
+              <div className="flex items-center gap-3 bg-card/50 backdrop-blur-sm px-4 py-2 rounded-lg border border-border/50">
+                <Settings className="w-4 h-4 text-muted-foreground" />
                 <input
                   type="password"
                   placeholder="Google AI API Key"
                   value={apiKey}
                   onChange={(e) => setApiKey(e.target.value)}
-                  className="px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="input-base bg-transparent border-0 focus:ring-0 focus:outline-none placeholder:text-muted-foreground/50"
                 />
               </div>
             </div>
           </div>
           
-          {/* Analysis Type Selector */}
-          <div className="mt-6">
-            <div className="flex gap-2">
+          {/* Modern Analysis Type Selector with Pills */}
+          <div className="mt-8">
+            <div className="flex flex-wrap gap-3">
               <button
                 onClick={() => {
                   setAnalysisType('budget');
@@ -599,10 +600,10 @@ export function AnalysisDashboard({ className = '' }: AnalysisDashboardProps) {
                   setScheduleResult(null);
                   setError(null);
                 }}
-                className={`px-4 py-2 rounded-md text-sm font-medium transition-colors flex items-center gap-2 ${
+                className={`btn px-6 py-2.5 rounded-full text-sm font-semibold transition-all flex items-center gap-2 ${
                   analysisType === 'budget'
-                    ? 'bg-blue-600 text-white'
-                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                    ? 'bg-gradient-to-r from-blue-600 to-blue-500 text-white shadow-glow scale-105'
+                    : 'bg-card hover:bg-accent text-foreground border border-border/50 hover:border-primary/30'
                 }`}
               >
                 <DollarSign className="w-4 h-4" />
@@ -616,10 +617,10 @@ export function AnalysisDashboard({ className = '' }: AnalysisDashboardProps) {
                   setScheduleResult(null);
                   setError(null);
                 }}
-                className={`px-4 py-2 rounded-md text-sm font-medium transition-colors flex items-center gap-2 ${
+                className={`btn px-6 py-2.5 rounded-full text-sm font-semibold transition-all flex items-center gap-2 ${
                   analysisType === 'script'
-                    ? 'bg-purple-600 text-white'
-                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                    ? 'bg-gradient-to-r from-purple-600 to-purple-500 text-white shadow-glow scale-105'
+                    : 'bg-card hover:bg-accent text-foreground border border-border/50 hover:border-primary/30'
                 }`}
               >
                 <Film className="w-4 h-4" />
@@ -633,23 +634,30 @@ export function AnalysisDashboard({ className = '' }: AnalysisDashboardProps) {
                   setScheduleResult(null);
                   setError(null);
                 }}
-                className={`px-4 py-2 rounded-md text-sm font-medium transition-colors flex items-center gap-2 ${
+                className={`btn px-6 py-2.5 rounded-full text-sm font-semibold transition-all flex items-center gap-2 ${
                   analysisType === 'schedule'
-                    ? 'bg-green-600 text-white'
-                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                    ? 'bg-gradient-to-r from-green-600 to-green-500 text-white shadow-glow scale-105'
+                    : 'bg-card hover:bg-accent text-foreground border border-border/50 hover:border-primary/30'
                 }`}
               >
                 <Calendar className="w-4 h-4" />
                 Schedule Analysis
               </button>
               
-              {/* Storage Management Button */}
+              {/* Modern Storage Management Button */}
               <button
                 onClick={() => setShowStoragePanel(!showStoragePanel)}
-                className="px-4 py-2 rounded-md text-sm font-medium transition-colors flex items-center gap-2 bg-gray-800 text-white hover:bg-gray-700"
+                className={`btn px-6 py-2.5 rounded-full text-sm font-semibold transition-all flex items-center gap-2 ${
+                  showStoragePanel
+                    ? 'bg-gradient-to-r from-gray-800 to-gray-700 text-white shadow-glow'
+                    : 'bg-card hover:bg-accent text-foreground border border-border/50 hover:border-primary/30'
+                }`}
               >
                 <Database className="w-4 h-4" />
-                Storage ({storedAnalyses.length})
+                <span>Storage</span>
+                <span className="inline-flex items-center justify-center px-2 py-0.5 text-xs font-bold bg-primary/20 text-primary rounded-full">
+                  {storedAnalyses.length}
+                </span>
               </button>
             </div>
           </div>
@@ -657,43 +665,47 @@ export function AnalysisDashboard({ className = '' }: AnalysisDashboardProps) {
       </div>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Error Display */}
+        {/* Modern Error Display */}
         {error && (
-          <div className="mb-6 bg-red-50 border border-red-200 rounded-md p-4">
-            <div className="flex items-center">
-              <AlertCircle className="w-5 h-5 text-red-400 mr-2" />
-              <p className="text-red-700">{error}</p>
+          <div className="mb-6 bg-destructive/10 border border-destructive/20 rounded-lg p-4 animate-slideIn">
+            <div className="flex items-center gap-3">
+              <div className="flex-shrink-0">
+                <AlertCircle className="w-5 h-5 text-destructive animate-pulse" />
+              </div>
+              <p className="text-sm font-medium text-destructive">{error}</p>
             </div>
           </div>
         )}
 
-        {/* Storage Management Panel */}
+        {/* Modern Storage Management Panel */}
         {showStoragePanel && (
-          <div className="mb-8 bg-white rounded-lg shadow">
-            <div className="border-b border-gray-200 px-6 py-4">
+          <div className="mb-8 bg-card rounded-xl shadow-lg border border-border/50 animate-scaleIn card-hover">
+            <div className="border-b border-border/50 px-6 py-5 bg-gradient-to-r from-primary/5 to-transparent">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                  <Database className="w-5 h-5 text-gray-600" />
+                  <div className="p-2 bg-primary/10 rounded-lg">
+                    <Database className="w-5 h-5 text-primary" />
+                  </div>
                   <div>
-                    <h3 className="text-lg font-medium text-gray-900">Stored AI Analysis Results</h3>
-                    <p className="text-sm text-gray-500">
-                      {storedAnalyses.length} stored analyses • 
-                      Script: {storedAnalyses.filter(a => a.type === 'script').length} • 
-                      Schedule: {storedAnalyses.filter(a => a.type === 'schedule').length}
+                    <h3 className="text-lg font-semibold text-foreground">Stored AI Analysis Results</h3>
+                    <p className="text-sm text-muted-foreground">
+                      <span className="font-medium">{storedAnalyses.length}</span> stored analyses • 
+                      Script: <span className="text-purple-600 font-medium">{storedAnalyses.filter(a => a.type === 'script').length}</span> • 
+                      Schedule: <span className="text-green-600 font-medium">{storedAnalyses.filter(a => a.type === 'schedule').length}</span>
                     </p>
                   </div>
                 </div>
                 <div className="flex items-center gap-2">
                   <button
                     onClick={() => AnalysisStorageService.exportAnalyses()}
-                    className="px-3 py-2 text-sm bg-blue-600 text-white rounded-md hover:bg-blue-700 flex items-center gap-2"
+                    className="btn px-4 py-2 text-sm bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 flex items-center gap-2"
                   >
-                    <Download className="w-5 h-5" />
+                    <Download className="w-4 h-4" />
                     Export
                   </button>
                   <button
                     onClick={handleClearAllAnalyses}
-                    className="px-3 py-2 text-sm bg-red-600 text-white rounded-md hover:bg-red-700 flex items-center gap-2"
+                    className="btn px-4 py-2 text-sm bg-destructive text-destructive-foreground rounded-lg hover:bg-destructive/90 flex items-center gap-2"
                   >
                     <Trash2 className="w-4 h-4" />
                     Clear All
@@ -705,49 +717,59 @@ export function AnalysisDashboard({ className = '' }: AnalysisDashboardProps) {
             <div className="p-6">
               {storedAnalyses.length === 0 ? (
                 <div className="text-center py-12">
-                  <Database className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-                  <h4 className="text-lg font-medium text-gray-900 mb-2">No stored analyses</h4>
-                  <p className="text-gray-500">Run script or schedule analysis to start storing results</p>
+                  <div className="inline-flex items-center justify-center w-16 h-16 bg-muted/50 rounded-full mb-4">
+                    <Database className="w-8 h-8 text-muted-foreground" />
+                  </div>
+                  <h4 className="text-lg font-semibold text-foreground mb-2">No stored analyses</h4>
+                  <p className="text-muted-foreground">Run script or schedule analysis to start storing results</p>
                 </div>
               ) : (
-                <div className="space-y-4 max-h-96 overflow-y-auto">
+                <div className="space-y-3 max-h-96 overflow-y-auto pr-2">
                   {storedAnalyses.map((analysis) => (
-                    <div key={analysis.id} className="border border-gray-200 rounded-lg p-4">
+                    <div key={analysis.id} className="group bg-secondary/30 border border-border/50 rounded-lg p-4 hover:bg-accent/50 hover:border-primary/30 transition-all duration-200">
                       <div className="flex items-start justify-between">
                         <div className="flex-1">
-                          <div className="flex items-center gap-3 mb-2">
-                            <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                          <div className="flex items-center gap-3 mb-3">
+                            <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold ${
                               analysis.type === 'script' 
-                                ? 'bg-purple-100 text-purple-800' 
-                                : 'bg-green-100 text-green-800'
+                                ? 'bg-purple-500/10 text-purple-600 border border-purple-500/20' 
+                                : 'bg-green-500/10 text-green-600 border border-green-500/20'
                             }`}>
-                              {analysis.type === 'script' ? <Film className="w-3 h-3 mr-1" /> : <Calendar className="w-3 h-3 mr-1" />}
+                              {analysis.type === 'script' ? <Film className="w-3 h-3 mr-1.5" /> : <Calendar className="w-3 h-3 mr-1.5" />}
                               {analysis.type.toUpperCase()}
                             </span>
-                            <h4 className="text-sm font-medium text-gray-900">{analysis.projectName}</h4>
+                            <h4 className="text-sm font-semibold text-foreground">{analysis.projectName}</h4>
                           </div>
-                          <div className="text-xs text-gray-500 space-y-1">
-                            <p>📅 {new Date(analysis.timestamp).toLocaleString()}</p>
+                          <div className="text-xs text-muted-foreground space-y-1.5">
+                            <p className="flex items-center gap-2">
+                              <span className="opacity-60">📅</span>
+                              {new Date(analysis.timestamp).toLocaleString()}
+                            </p>
                             {analysis.metadata && (
-                              <p>
-                                ⏱️ {analysis.metadata.processingTime}ms • 
-                                ✅ {analysis.metadata.stagesCompleted} stages • 
-                                📊 {Math.round((analysis.metadata.confidence || 0) * 100)}% confidence
+                              <p className="flex items-center gap-2 flex-wrap">
+                                <span className="opacity-60">⏱️</span>
+                                <span className="font-medium">{analysis.metadata.processingTime}ms</span>
+                                <span className="opacity-40">•</span>
+                                <span className="opacity-60">✅</span>
+                                <span className="font-medium">{analysis.metadata.stagesCompleted} stages</span>
+                                <span className="opacity-40">•</span>
+                                <span className="opacity-60">📊</span>
+                                <span className="font-medium">{Math.round((analysis.metadata.confidence || 0) * 100)}%</span>
                               </p>
                             )}
                           </div>
                         </div>
-                        <div className="flex items-center gap-2 ml-4">
+                        <div className="flex items-center gap-1 ml-4 opacity-0 group-hover:opacity-100 transition-opacity">
                           <button
                             onClick={() => handleViewStoredAnalysis(analysis)}
-                            className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-md transition-colors"
+                            className="p-2 text-muted-foreground hover:text-primary hover:bg-primary/10 rounded-lg transition-all"
                             title="View Analysis"
                           >
-                            <Eye className="w-5 h-5" />
+                            <Eye className="w-4 h-4" />
                           </button>
                           <button
                             onClick={() => handleDeleteAnalysis(analysis.id)}
-                            className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-md transition-colors"
+                            className="p-2 text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded-lg transition-all"
                             title="Delete Analysis"
                           >
                             <Trash2 className="w-4 h-4" />
