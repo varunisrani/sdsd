@@ -23,15 +23,23 @@ import {
   Package,
   MapPin,
   Car,
-  Building
+  Building,
+  Code
 } from 'lucide-react';
 import { BudgetAnalysisService, ScriptDataUtils as BudgetUtils, BudgetAnalysisResult, AgentTestResult, ScriptData, DEFAULT_BUDGET_CONFIG } from '../lib/budget-integration';
 import { ScriptAnalysisService, ScriptDataUtils, ScriptAnalysisResult, AssetsData, DEFAULT_SCRIPT_CONFIG } from '../lib/script-integration';
 import { ScheduleAnalysisService, ScriptDataUtils as ScheduleUtils, ScheduleAnalysisResult, ShotsData, SequenceData, DEFAULT_SCHEDULE_CONFIG } from '../lib/schedule-integration';
 import { AnalysisStorageService, StoredAnalysis } from '../lib/storage-service';
 import { getKitsuIntegration, KitsuConnectionStatus, ParsedKitsuData } from '../lib/kitsu-integration';
+import { ClaudeCodeAnalysisService, ClaudeCodeAnalysisResult, ClaudeCodeDataUtils, DEFAULT_CLAUDE_CODE_CONFIG } from '../lib/claude-code-integration';
+import { AssetsPlannerService, AssetsPlannerAnalysisResult, AssetsPlannerDataUtils, DEFAULT_ASSETS_PLANNER_CONFIG } from '../lib/assets-planner-integration';
+import { LegalComplianceAnalysisService, LegalComplianceAnalysisResult, LegalComplianceDataUtils, DEFAULT_LEGAL_COMPLIANCE_CONFIG } from '../lib/legal-compliance-integration';
+import { PreproductionDetailAnalysisService, PreproductionDetailAnalysisResult, PreproductionDetailDataUtils, DEFAULT_PREPRODUCTION_DETAIL_CONFIG } from '../lib/preproduction-detail-integration';
+import { ShotsPlannerAnalysisService, ShotsPlannerAnalysisResult, ShotsPlannerDataUtils, DEFAULT_SHOTS_PLANNER_CONFIG } from '../lib/shots-planner-integration';
+import { ScheduleOptimizerAnalysisService, ScheduleOptimizerAnalysisResult, ScheduleOptimizerDataUtils, DEFAULT_SCHEDULE_OPTIMIZER_CONFIG } from '../lib/schedule-optimizer-integration';
+import { StoryboardDesignerAnalysisService, StoryboardDesignerAnalysisResult, StoryboardDesignerDataUtils, DEFAULT_STORYBOARD_DESIGNER_CONFIG } from '../lib/storyboard-designer-integration';
 
-type AnalysisType = 'budget' | 'script' | 'schedule';
+type AnalysisType = 'budget' | 'script' | 'schedule' | 'claude-code' | 'assets-planner' | 'legal-compliance' | 'shots-planner' | 'schedule-optimizer' | 'storyboard-designer' | 'preproduction-detail';
 type DataSource = 'file' | 'kitsu';
 
 
@@ -47,6 +55,13 @@ export function AnalysisDashboard({ className = '' }: AnalysisDashboardProps) {
   const [budgetResult, setBudgetResult] = useState<BudgetAnalysisResult | null>(null);
   const [scriptResult, setScriptResult] = useState<ScriptAnalysisResult | null>(null);
   const [scheduleResult, setScheduleResult] = useState<ScheduleAnalysisResult | null>(null);
+  const [claudeCodeResult, setClaudeCodeResult] = useState<ClaudeCodeAnalysisResult | null>(null);
+  const [assetsPlannerResult, setAssetsPlannerResult] = useState<AssetsPlannerAnalysisResult | null>(null);
+  const [legalComplianceResult, setLegalComplianceResult] = useState<LegalComplianceAnalysisResult | null>(null);
+  const [shotsPlannerResult, setShotsPlannerResult] = useState<ShotsPlannerAnalysisResult | null>(null);
+  const [scheduleOptimizerResult, setScheduleOptimizerResult] = useState<ScheduleOptimizerAnalysisResult | null>(null);
+  const [storyboardDesignerResult, setStoryboardDesignerResult] = useState<StoryboardDesignerAnalysisResult | null>(null);
+  const [preproductionDetailResult, setPreproductionDetailResult] = useState<PreproductionDetailAnalysisResult | null>(null);
   const [testResults, setTestResults] = useState<AgentTestResult[]>([]);
   const [orchestratorTest, setOrchestratorTest] = useState<AgentTestResult | null>(null);
   const [currentScript, setCurrentScript] = useState<ScriptData | null>(null);
@@ -59,6 +74,7 @@ export function AnalysisDashboard({ className = '' }: AnalysisDashboardProps) {
   const [error, setError] = useState<string | null>(null);
   const [storedAnalyses, setStoredAnalyses] = useState<StoredAnalysis[]>([]);
   const [showStoragePanel, setShowStoragePanel] = useState(false);
+  const [customQuery, setCustomQuery] = useState<string>('');
   
   // Kitsu integration state
   const [dataSource, setDataSource] = useState<DataSource>('file');
@@ -196,6 +212,76 @@ export function AnalysisDashboard({ className = '' }: AnalysisDashboardProps) {
     }
     return new ScheduleAnalysisService({
       ...DEFAULT_SCHEDULE_CONFIG,
+      apiKey: apiKey.trim()
+    });
+  }, [apiKey]);
+
+  const createClaudeCodeService = useCallback(() => {
+    if (!apiKey.trim()) {
+      throw new Error('API key is required');
+    }
+    return new ClaudeCodeAnalysisService({
+      ...DEFAULT_CLAUDE_CODE_CONFIG,
+      apiKey: apiKey.trim()
+    });
+  }, [apiKey]);
+
+  const createAssetsPlannerService = useCallback(() => {
+    if (!apiKey.trim()) {
+      throw new Error('API key is required');
+    }
+    return new AssetsPlannerService({
+      ...DEFAULT_ASSETS_PLANNER_CONFIG,
+      apiKey: apiKey.trim()
+    });
+  }, [apiKey]);
+
+  const createShotsPlannerService = useCallback(() => {
+    if (!apiKey.trim()) {
+      throw new Error('API key is required');
+    }
+    return new ShotsPlannerAnalysisService({
+      ...DEFAULT_SHOTS_PLANNER_CONFIG,
+      apiKey: apiKey.trim()
+    });
+  }, [apiKey]);
+
+  const createLegalComplianceService = useCallback(() => {
+    if (!apiKey.trim()) {
+      throw new Error('API key is required');
+    }
+    return new LegalComplianceAnalysisService({
+      ...DEFAULT_LEGAL_COMPLIANCE_CONFIG,
+      apiKey: apiKey.trim()
+    });
+  }, [apiKey]);
+
+  const createScheduleOptimizerService = useCallback(() => {
+    if (!apiKey.trim()) {
+      throw new Error('API key is required');
+    }
+    return new ScheduleOptimizerAnalysisService({
+      ...DEFAULT_SCHEDULE_OPTIMIZER_CONFIG,
+      apiKey: apiKey.trim()
+    });
+  }, [apiKey]);
+
+  const createStoryboardDesignerService = useCallback(() => {
+    if (!apiKey.trim()) {
+      throw new Error('API key is required');
+    }
+    return new StoryboardDesignerAnalysisService({
+      ...DEFAULT_STORYBOARD_DESIGNER_CONFIG,
+      apiKey: apiKey.trim()
+    });
+  }, [apiKey]);
+
+  const createPreproductionDetailService = useCallback(() => {
+    if (!apiKey.trim()) {
+      throw new Error('API key is required');
+    }
+    return new PreproductionDetailAnalysisService({
+      ...DEFAULT_PREPRODUCTION_DETAIL_CONFIG,
       apiKey: apiKey.trim()
     });
   }, [apiKey]);
@@ -604,17 +690,42 @@ export function AnalysisDashboard({ className = '' }: AnalysisDashboardProps) {
       setScriptResult(analysis.result);
       setBudgetResult(null);
       setScheduleResult(null);
+      setClaudeCodeResult(null);
       setAnalysisType('script');
     } else if (analysis.type === 'schedule') {
       setScheduleResult(analysis.result);
       setBudgetResult(null);
       setScriptResult(null);
+      setClaudeCodeResult(null);
       setAnalysisType('schedule');
     } else if (analysis.type === 'budget') {
       setBudgetResult(analysis.result);
       setScriptResult(null);
       setScheduleResult(null);
+      setClaudeCodeResult(null);
       setAnalysisType('budget');
+    } else if (analysis.type === 'claude-code') {
+      setClaudeCodeResult(analysis.result);
+      setBudgetResult(null);
+      setScriptResult(null);
+      setScheduleResult(null);
+      setLegalComplianceResult(null);
+      setAnalysisType('claude-code');
+    } else if (analysis.type === 'storyboard-designer') {
+      setStoryboardDesignerResult(analysis.result);
+      setBudgetResult(null);
+      setScriptResult(null);
+      setScheduleResult(null);
+      setClaudeCodeResult(null);
+      setLegalComplianceResult(null);
+      setAnalysisType('storyboard-designer');
+    } else if (analysis.type === 'legal-compliance') {
+      setLegalComplianceResult(analysis.result);
+      setBudgetResult(null);
+      setScriptResult(null);
+      setScheduleResult(null);
+      setClaudeCodeResult(null);
+      setAnalysisType('legal-compliance');
     }
     setShowStoragePanel(false);
   };
@@ -653,6 +764,62 @@ export function AnalysisDashboard({ className = '' }: AnalysisDashboardProps) {
       const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
       const projectName = 'Schedule-Analysis';
       downloadJSON(scheduleResult, `${projectName}_Schedule-Analysis_${timestamp}.json`);
+    }
+  };
+
+  const handleExportClaudeCodeAnalysis = () => {
+    if (claudeCodeResult) {
+      const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+      const projectName = 'Claude-Code-Analysis';
+      downloadJSON(claudeCodeResult, `${projectName}_Claude-Code-Analysis_${timestamp}.json`);
+    }
+  };
+
+  const handleExportLegalComplianceAnalysis = () => {
+    if (legalComplianceResult) {
+      const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+      const projectName = 'Legal-Compliance-Analysis';
+      downloadJSON(legalComplianceResult, `${projectName}_Legal-Compliance-Analysis_${timestamp}.json`);
+    }
+  };
+
+  const handleExportAssetsPlannerAnalysis = () => {
+    if (assetsPlannerResult) {
+      const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+      const projectName = 'Assets-Planner-Analysis';
+      downloadJSON(assetsPlannerResult, `${projectName}_Assets-Planner-Analysis_${timestamp}.json`);
+    }
+  };
+
+  const handleExportPreproductionDetailAnalysis = () => {
+    if (preproductionDetailResult) {
+      const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+      const projectName = 'Preproduction-Detail-Analysis';
+      downloadJSON(preproductionDetailResult, `${projectName}_Preproduction-Detail-Analysis_${timestamp}.json`);
+    }
+  };
+
+  const handleExportShotsPlannerAnalysis = () => {
+    if (shotsPlannerResult) {
+      const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+      const projectName = 'Shots-Planner-Analysis';
+      downloadJSON(shotsPlannerResult, `${projectName}_Shots-Planner-Analysis_${timestamp}.json`);
+    }
+  };
+
+  const handleExportStoryboardDesignerAnalysis = () => {
+    if (storyboardDesignerResult) {
+      const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+      const projectName = 'Storyboard-Designer-Analysis';
+      downloadJSON(storyboardDesignerResult, `${projectName}_Storyboard-Designer-Analysis_${timestamp}.json`);
+    }
+  };
+
+  const handleExportScheduleOptimizerAnalysis = () => {
+    if (scheduleOptimizerResult) {
+      const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+      const projectName = 'Schedule-Optimizer-Analysis';
+      downloadJSON(scheduleOptimizerResult, `${projectName}_Schedule-Optimizer-Analysis_${timestamp}.json`);
     }
   };
 
@@ -708,6 +875,21 @@ export function AnalysisDashboard({ className = '' }: AnalysisDashboardProps) {
         return;
       }
       console.log('✅ Budget analysis validation passed');
+    } else if (analysisType === 'claude-code') {
+      // Claude Code analysis doesn't require pre-loaded script data
+      console.log('✅ Claude Code analysis validation passed');
+    } else if (analysisType === 'shots-planner') {
+      // Shots Planner analysis doesn't require pre-loaded script data
+      console.log('✅ Shots Planner analysis validation passed');
+    } else if (analysisType === 'storyboard-designer') {
+      // Storyboard Designer analysis doesn't require pre-loaded script data
+      console.log('✅ Storyboard Designer analysis validation passed');
+    } else if (analysisType === 'legal-compliance') {
+      // Legal Compliance analysis doesn't require pre-loaded script data
+      console.log('✅ Legal Compliance analysis validation passed');
+    } else if (analysisType === 'preproduction-detail') {
+      // Preproduction detail analysis doesn't require pre-loaded script data
+      console.log('✅ Preproduction detail analysis validation passed');
     } else {
       if (!currentScript) {
         console.error('❌ Script analysis validation failed: no script');
@@ -723,6 +905,10 @@ export function AnalysisDashboard({ className = '' }: AnalysisDashboardProps) {
       setBudgetResult(null);
       setScriptResult(null);
       setScheduleResult(null);
+      setClaudeCodeResult(null);
+      setShotsPlannerResult(null);
+      setLegalComplianceResult(null);
+      setPreproductionDetailResult(null);
 
       if (analysisType === 'budget') {
         const service = createBudgetService();
@@ -754,7 +940,7 @@ export function AnalysisDashboard({ className = '' }: AnalysisDashboardProps) {
         if (!result.success) {
           setError(result.error || 'Script analysis failed');
         }
-      } else {
+      } else if (analysisType === 'schedule') {
         // Schedule analysis
         if (!currentShots && !currentSequence) {
           setError('No shots or sequence data loaded for schedule analysis');
@@ -794,6 +980,132 @@ export function AnalysisDashboard({ className = '' }: AnalysisDashboardProps) {
         if (!result.success) {
           setError(result.error || 'Schedule analysis failed');
         }
+      } else if (analysisType === 'claude-code') {
+        // Claude Code analysis
+        const service = createClaudeCodeService();
+        const prompt = customQuery.trim() || "Read BLACK_PANTHER.txt from Downloads in 500-line chunks until you have the complete script. Start with lines 1-500, then 501-1000, etc. Only create script_breakdown_report.md after reading the ENTIRE script.";
+        
+        const result = await service.analyzeScript(prompt);
+        setClaudeCodeResult(result);
+        
+        // Save to local storage
+        if (result.success) {
+          const projectName = 'Claude Code Analysis';
+          AnalysisStorageService.saveAnalysis('claude-code', projectName, result);
+          setStoredAnalyses(AnalysisStorageService.getStoredAnalyses());
+        }
+        
+        if (!result.success) {
+          setError(result.error || 'Claude Code analysis failed');
+        }
+      } else if (analysisType === 'assets-planner') {
+        // Assets Planner analysis
+        const service = createAssetsPlannerService();
+        const prompt = customQuery.trim() || "Read BLACK_PANTHER.txt and create assets_planning_report.md with props, costumes, makeup, vehicles catalog";
+        
+        const result = await service.planAssets(prompt);
+        setAssetsPlannerResult(result);
+        
+        // Save to local storage
+        if (result.success) {
+          const projectName = 'Assets Planner Analysis';
+          AnalysisStorageService.saveAnalysis('assets-planner', projectName, result);
+          setStoredAnalyses(AnalysisStorageService.getStoredAnalyses());
+        }
+        
+        if (!result.success) {
+          setError(result.error || 'Assets Planner analysis failed');
+        }
+      } else if (analysisType === 'shots-planner') {
+        // Shots Planner analysis
+        const service = createShotsPlannerService();
+        const prompt = customQuery.trim() || "Read BLACK_PANTHER.txt and visual_planning_storyboard_report.md from Downloads to create shots_planning_report.md with detailed shot lists, camera setups, coverage patterns, and technical specifications for every scene.";
+        
+        const result = await service.analyzeScript(prompt);
+        setShotsPlannerResult(result);
+        
+        // Save to local storage
+        if (result.success) {
+          const projectName = 'Shots Planner Analysis';
+          AnalysisStorageService.saveAnalysis('shots-planner', projectName, result);
+          setStoredAnalyses(AnalysisStorageService.getStoredAnalyses());
+        }
+        
+        if (!result.success) {
+          setError(result.error || 'Shots Planner analysis failed');
+        }
+      } else if (analysisType === 'storyboard-designer') {
+        // Storyboard Designer analysis
+        const service = createStoryboardDesignerService();
+        const prompt = customQuery.trim() || "Read BLACK_PANTHER.txt and create visual_planning_storyboard_report.md";
+        
+        const result = await service.analyzeScript(prompt);
+        setStoryboardDesignerResult(result);
+        
+        // Save to local storage
+        if (result.success) {
+          const projectName = 'Storyboard Designer Analysis';
+          AnalysisStorageService.saveAnalysis('storyboard-designer', projectName, result);
+          setStoredAnalyses(AnalysisStorageService.getStoredAnalyses());
+        }
+        
+        if (!result.success) {
+          setError(result.error || 'Storyboard Designer analysis failed');
+        }
+      } else if (analysisType === 'legal-compliance') {
+        // Legal Compliance analysis
+        const service = createLegalComplianceService();
+        const prompt = customQuery.trim() || "Read BLACK_PANTHER.txt and create legal_compliance_report.md with rights clearances and contracts";
+        
+        const result = await service.analyzeCompliance(prompt);
+        setLegalComplianceResult(result);
+        
+        // Save to local storage
+        if (result.success) {
+          const projectName = 'Legal Compliance Analysis';
+          AnalysisStorageService.saveAnalysis('legal-compliance', projectName, result);
+          setStoredAnalyses(AnalysisStorageService.getStoredAnalyses());
+        }
+        
+        if (!result.success) {
+          setError(result.error || 'Legal Compliance analysis failed');
+        }
+      } else if (analysisType === 'schedule-optimizer') {
+        // Schedule Optimizer analysis
+        const service = createScheduleOptimizerService();
+        const prompt = customQuery.trim() || "Read script breakdown and create production_schedule_report.md with shooting schedules";
+        
+        const result = await service.analyzeSchedule(prompt);
+        setScheduleOptimizerResult(result);
+        
+        // Save to local storage
+        if (result.success) {
+          const projectName = 'Schedule Optimizer Analysis';
+          AnalysisStorageService.saveAnalysis('schedule-optimizer', projectName, result);
+          setStoredAnalyses(AnalysisStorageService.getStoredAnalyses());
+        }
+        
+        if (!result.success) {
+          setError(result.error || 'Schedule Optimizer analysis failed');
+        }
+      } else if (analysisType === 'preproduction-detail') {
+        // Preproduction Detail analysis
+        const service = createPreproductionDetailService();
+        const prompt = customQuery.trim() || "Read all reports and create preproduction_master_plan.md integrating everything";
+        
+        const result = await service.analyzePreproduction(prompt);
+        setPreproductionDetailResult(result);
+        
+        // Save to local storage
+        if (result.success) {
+          const projectName = 'Preproduction Detail Analysis';
+          AnalysisStorageService.saveAnalysis('preproduction-detail', projectName, result);
+          setStoredAnalyses(AnalysisStorageService.getStoredAnalyses());
+        }
+        
+        if (!result.success) {
+          setError(result.error || 'Preproduction Detail analysis failed');
+        }
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Analysis failed');
@@ -818,6 +1130,41 @@ export function AnalysisDashboard({ className = '' }: AnalysisDashboardProps) {
         setOrchestratorTest(orchTest);
       } else if (analysisType === 'script') {
         const service = createScriptService();
+        const agentTests = await service.testIndividualAgents();
+        setTestResults(agentTests);
+        const orchTest = await service.testOrchestrator();
+        setOrchestratorTest(orchTest);
+      } else if (analysisType === 'claude-code') {
+        const service = createClaudeCodeService();
+        const agentTests = await service.testIndividualAgents();
+        setTestResults(agentTests);
+        const orchTest = await service.testOrchestrator();
+        setOrchestratorTest(orchTest);
+      } else if (analysisType === 'assets-planner') {
+        const service = createAssetsPlannerService();
+        const agentTest = await service.testAgent();
+        setTestResults([agentTest]);
+        setOrchestratorTest(null);
+      } else if (analysisType === 'shots-planner') {
+        const service = createShotsPlannerService();
+        const agentTests = await service.testIndividualAgents();
+        setTestResults(agentTests);
+        const orchTest = await service.testOrchestrator();
+        setOrchestratorTest(orchTest);
+      } else if (analysisType === 'storyboard-designer') {
+        const service = createStoryboardDesignerService();
+        const agentTests = await service.testIndividualAgents();
+        setTestResults(agentTests);
+        const orchTest = await service.testOrchestrator();
+        setOrchestratorTest(orchTest);
+      } else if (analysisType === 'legal-compliance') {
+        const service = createLegalComplianceService();
+        const agentTests = await service.testIndividualAgents();
+        setTestResults(agentTests);
+        const orchTest = await service.testOrchestrator();
+        setOrchestratorTest(orchTest);
+      } else if (analysisType === 'preproduction-detail') {
+        const service = createPreproductionDetailService();
         const agentTests = await service.testIndividualAgents();
         setTestResults(agentTests);
         const orchTest = await service.testOrchestrator();
@@ -879,6 +1226,9 @@ export function AnalysisDashboard({ className = '' }: AnalysisDashboardProps) {
                   setBudgetResult(null);
                   setScriptResult(null);
                   setScheduleResult(null);
+                  setClaudeCodeResult(null);
+                  setScheduleOptimizerResult(null);
+                  setStoryboardDesignerResult(null);
                   setError(null);
                 }}
                 className={`px-4 py-2 rounded-md text-sm font-medium transition-colors flex items-center gap-2 ${
@@ -896,6 +1246,10 @@ export function AnalysisDashboard({ className = '' }: AnalysisDashboardProps) {
                   setBudgetResult(null);
                   setScriptResult(null);
                   setScheduleResult(null);
+                  setClaudeCodeResult(null);
+                  setShotsPlannerResult(null);
+                  setScheduleOptimizerResult(null);
+                  setStoryboardDesignerResult(null);
                   setError(null);
                 }}
                 className={`px-4 py-2 rounded-md text-sm font-medium transition-colors flex items-center gap-2 ${
@@ -913,6 +1267,10 @@ export function AnalysisDashboard({ className = '' }: AnalysisDashboardProps) {
                   setBudgetResult(null);
                   setScriptResult(null);
                   setScheduleResult(null);
+                  setClaudeCodeResult(null);
+                  setShotsPlannerResult(null);
+                  setScheduleOptimizerResult(null);
+                  setStoryboardDesignerResult(null);
                   setError(null);
                 }}
                 className={`px-4 py-2 rounded-md text-sm font-medium transition-colors flex items-center gap-2 ${
@@ -923,6 +1281,154 @@ export function AnalysisDashboard({ className = '' }: AnalysisDashboardProps) {
               >
                 <Calendar className="w-4 h-4" />
                 Schedule Analysis
+              </button>
+              <button
+                onClick={() => {
+                  setAnalysisType('claude-code');
+                  setBudgetResult(null);
+                  setScriptResult(null);
+                  setScheduleResult(null);
+                  setClaudeCodeResult(null);
+                  setShotsPlannerResult(null);
+                  setAssetsPlannerResult(null);
+                  setScheduleOptimizerResult(null);
+                  setStoryboardDesignerResult(null);
+                  setError(null);
+                }}
+                className={`px-4 py-2 rounded-md text-sm font-medium transition-colors flex items-center gap-2 ${
+                  analysisType === 'claude-code'
+                    ? 'bg-orange-600 text-white'
+                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                }`}
+              >
+                <Code className="w-4 h-4" />
+                Claude Code
+              </button>
+              
+              <button
+                onClick={() => {
+                  setAnalysisType('shots-planner');
+                  setBudgetResult(null);
+                  setScriptResult(null);
+                  setScheduleResult(null);
+                  setClaudeCodeResult(null);
+                  setShotsPlannerResult(null);
+                  setAssetsPlannerResult(null);
+                  setScheduleOptimizerResult(null);
+                  setStoryboardDesignerResult(null);
+                  setError(null);
+                }}
+                className={`px-4 py-2 rounded-md text-sm font-medium transition-colors flex items-center gap-2 ${
+                  analysisType === 'shots-planner'
+                    ? 'bg-teal-600 text-white'
+                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                }`}
+              >
+                <Target className="w-4 h-4" />
+                Shots Planner
+              </button>
+              
+              <button
+                onClick={() => {
+                  setAnalysisType('legal-compliance');
+                  setBudgetResult(null);
+                  setScriptResult(null);
+                  setScheduleResult(null);
+                  setClaudeCodeResult(null);
+                  setLegalComplianceResult(null);
+                  setError(null);
+                }}
+                className={`px-4 py-2 rounded-md text-sm font-medium transition-colors flex items-center gap-2 ${
+                  analysisType === 'legal-compliance'
+                    ? 'bg-red-600 text-white'
+                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                }`}
+              >
+                <Building className="w-4 h-4" />
+                Legal Compliance
+              </button>
+              
+              <button
+                onClick={() => {
+                  setAnalysisType('assets-planner');
+                  setBudgetResult(null);
+                  setScriptResult(null);
+                  setScheduleResult(null);
+                  setClaudeCodeResult(null);
+                  setAssetsPlannerResult(null);
+                  setScheduleOptimizerResult(null);
+                  setStoryboardDesignerResult(null);
+                  setError(null);
+                }}
+                className={`px-4 py-2 rounded-md text-sm font-medium transition-colors flex items-center gap-2 ${
+                  analysisType === 'assets-planner'
+                    ? 'bg-teal-600 text-white'
+                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                }`}
+              >
+                <Package className="w-4 h-4" />
+                Assets Planner
+              </button>
+              <button
+                onClick={() => {
+                  setAnalysisType('storyboard-designer');
+                  setBudgetResult(null);
+                  setScriptResult(null);
+                  setScheduleResult(null);
+                  setClaudeCodeResult(null);
+                  setScheduleOptimizerResult(null);
+                  setStoryboardDesignerResult(null);
+                  setError(null);
+                }}
+                className={`px-4 py-2 rounded-md text-sm font-medium transition-colors flex items-center gap-2 ${
+                  analysisType === 'storyboard-designer'
+                    ? 'bg-indigo-600 text-white'
+                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                }`}
+              >
+                <Film className="w-4 h-4" />
+                Storyboard Designer
+              </button>
+              <button
+                onClick={() => {
+                  setAnalysisType('preproduction-detail');
+                  setBudgetResult(null);
+                  setScriptResult(null);
+                  setScheduleResult(null);
+                  setClaudeCodeResult(null);
+                  setScheduleOptimizerResult(null);
+                  setStoryboardDesignerResult(null);
+                  setPreproductionDetailResult(null);
+                  setError(null);
+                }}
+                className={`px-4 py-2 rounded-md text-sm font-medium transition-colors flex items-center gap-2 ${
+                  analysisType === 'preproduction-detail'
+                    ? 'bg-teal-600 text-white'
+                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                }`}
+              >
+                <Database className="w-4 h-4" />
+                Preproduction Detail
+              </button>
+              <button
+                onClick={() => {
+                  setAnalysisType('schedule-optimizer');
+                  setBudgetResult(null);
+                  setScriptResult(null);
+                  setScheduleResult(null);
+                  setClaudeCodeResult(null);
+                  setScheduleOptimizerResult(null);
+                  setStoryboardDesignerResult(null);
+                  setError(null);
+                }}
+                className={`px-4 py-2 rounded-md text-sm font-medium transition-colors flex items-center gap-2 ${
+                  analysisType === 'schedule-optimizer'
+                    ? 'bg-purple-600 text-white'
+                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                }`}
+              >
+                <Calendar className="w-4 h-4" />
+                Schedule Optimizer
               </button>
               
               {/* Storage Management Button */}
@@ -1068,19 +1574,132 @@ export function AnalysisDashboard({ className = '' }: AnalysisDashboardProps) {
             <div className="bg-white rounded-lg shadow">
               <div className="px-6 py-4 border-b border-gray-200">
                 <h3 className="text-lg font-medium text-gray-900">
-                  {analysisType === 'budget' ? 'Data Management' : 'Script Management'}
+                  {analysisType === 'budget' ? 'Data Management' : 
+                   analysisType === 'claude-code' ? 'Claude Code Setup' :
+                   analysisType === 'legal-compliance' ? 'Legal Compliance Setup' :
+                   analysisType === 'assets-planner' ? 'Assets Planner Setup' : 'Script Management'}
                 </h3>
                 <p className="text-sm text-gray-500">
                   {analysisType === 'budget' 
                     ? 'Load analysis results for budget calculation'
+                    : analysisType === 'claude-code'
+                    ? 'Configure Claude Code SDK for script analysis'
+                    : analysisType === 'legal-compliance'
+                    ? 'Configure legal compliance analyzer for rights and contracts analysis'
+                    : analysisType === 'assets-planner'
+                    ? 'Configure assets planner for production assets catalog'
                     : `Load and manage your script files for ${analysisType} analysis`
                   }
                 </p>
               </div>
               
               <div className="p-6 space-y-6">
+                {/* Claude Code / Assets Planner / Preproduction Detail Query Input */}
+                {(analysisType === 'claude-code' || analysisType === 'legal-compliance' || analysisType === 'assets-planner' || analysisType === 'preproduction-detail') && (
+                  <div className="space-y-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        {analysisType === 'claude-code' ? '🤖 Custom Query for Claude Code Analysis' : 
+                         analysisType === 'legal-compliance' ? '⚖️ Custom Query for Legal Compliance Analysis' :
+                         analysisType === 'assets-planner' ? '📦 Custom Query for Assets Planner' :
+                         '🎬 Custom Query for Preproduction Detail Analysis'}
+                      </label>
+                      <textarea
+                        value={customQuery}
+                        onChange={(e) => setCustomQuery(e.target.value)}
+                        placeholder={analysisType === 'claude-code' 
+                          ? "Enter your custom query for Claude Code analysis (leave empty to use default script parsing query)..."
+                          : analysisType === 'legal-compliance'
+                          ? "Enter your custom query for Legal Compliance analysis (leave empty to use default rights and contracts analysis query)..."
+                          : analysisType === 'assets-planner' 
+                          ? "Enter your custom query for Assets Planner (leave empty to use default assets cataloging query)..."
+                          : "Enter your custom query for Preproduction Detail analysis (leave empty to use default reports integration query)..."}
+                        rows={4}
+                        className={`w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm text-sm resize-none ${
+                          analysisType === 'claude-code' 
+                            ? 'focus:ring-orange-500 focus:border-orange-500' 
+                            : analysisType === 'legal-compliance'
+                            ? 'focus:ring-red-500 focus:border-red-500'
+                            : analysisType === 'assets-planner'
+                            ? 'focus:ring-teal-500 focus:border-teal-500'
+                            : 'focus:ring-teal-500 focus:border-teal-500'
+                        }`}
+                      />
+                      <p className="mt-1 text-xs text-gray-500">
+                        Default: {analysisType === 'claude-code'
+                          ? '"Read BLACK_PANTHER.txt from Downloads in 500-line chunks until you have the complete script..."'
+                          : analysisType === 'legal-compliance'
+                          ? '"Read BLACK_PANTHER.txt and create legal_compliance_report.md with rights clearances and contracts"'
+                          : analysisType === 'assets-planner'
+                          ? '"Read BLACK_PANTHER.txt and create assets_planning_report.md with props, costumes, makeup, vehicles catalog"'
+                          : '"Read all reports and create preproduction_master_plan.md integrating everything"'
+                        }
+                      </p>
+                    </div>
+                    
+                    <div className="bg-orange-50 border border-orange-200 rounded-lg p-3">
+                      <div className="flex items-start">
+                        <div className="flex-shrink-0">
+                          <Code className="h-5 w-5 text-orange-400 mt-0.5" />
+                        </div>
+                        <div className="ml-3">
+                          <h3 className="text-sm font-medium text-orange-800">Query Tips</h3>
+                          <div className="mt-2 text-sm text-orange-700">
+                            <ul className="list-disc pl-5 space-y-1">
+                              <li>Ask Claude to analyze files, create reports, or process data</li>
+                              <li>Use specific file paths if you know them (e.g., "Read sample.txt")</li>
+                              <li>Request specific output formats (markdown, JSON, etc.)</li>
+                              <li>The system has access to Read, Write, LS, Grep, and other tools</li>
+                            </ul>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Schedule Optimizer Query Input */}
+                {analysisType === 'schedule-optimizer' && (
+                  <div className="space-y-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        📅 Custom Query for Schedule Optimizer Analysis
+                      </label>
+                      <textarea
+                        value={customQuery}
+                        onChange={(e) => setCustomQuery(e.target.value)}
+                        placeholder="Enter your custom query for Schedule Optimizer analysis (leave empty to use default schedule optimization query)..."
+                        rows={4}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-purple-500 focus:border-purple-500 text-sm resize-none"
+                      />
+                      <p className="mt-1 text-xs text-gray-500">
+                        Default: "Read script breakdown and create production_schedule_report.md with shooting schedules"
+                      </p>
+                    </div>
+                    
+                    <div className="bg-purple-50 border border-purple-200 rounded-lg p-3">
+                      <div className="flex items-start">
+                        <div className="flex-shrink-0">
+                          <Calendar className="h-5 w-5 text-purple-400 mt-0.5" />
+                        </div>
+                        <div className="ml-3">
+                          <h3 className="text-sm font-medium text-purple-800">Schedule Optimization Tips</h3>
+                          <div className="mt-2 text-sm text-purple-700">
+                            <ul className="list-disc pl-5 space-y-1">
+                              <li>Request specific schedule formats (stripboard, day-out-of-days, call sheets)</li>
+                              <li>Ask for optimization based on locations, actors, or equipment</li>
+                              <li>Include specific shooting constraints or preferences</li>
+                              <li>Request budget-conscious scheduling recommendations</li>
+                            </ul>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
                 {/* Data Source Selection - Only for Script and Schedule Analysis */}
-                {analysisType !== 'budget' && (
+                {analysisType !== 'budget' && analysisType !== 'claude-code' && analysisType !== 'schedule-optimizer' && (
                   <div className="border-b border-gray-200 pb-4">
                     <label className="block text-sm font-medium text-gray-700 mb-3">Data Source</label>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -1734,12 +2353,22 @@ export function AnalysisDashboard({ className = '' }: AnalysisDashboardProps) {
                       ? (!currentShots && !currentSequence)  // Schedule needs shots OR sequences
                       : analysisType === 'budget'
                       ? (!currentScriptAnalysis || !currentScheduleAnalysis)  // Budget needs both analysis results
+                      : (analysisType === 'claude-code' || analysisType === 'legal-compliance' || analysisType === 'assets-planner')
+                      ? false  // Claude Code, Legal Compliance and Assets Planner don't need pre-loaded files
+                      : analysisType === 'schedule-optimizer'
+                      ? false  // Schedule Optimizer doesn't need pre-loaded files
+                      : analysisType === 'preproduction-detail'
+                      ? false  // Preproduction Detail doesn't need pre-loaded files
                       : !currentScript  // Script needs script file
                     )
                   }
                   className={`w-full px-4 py-3 text-white rounded-md disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2 ${
                     analysisType === 'budget' ? 'bg-blue-600 hover:bg-blue-700' : 
                     analysisType === 'script' ? 'bg-purple-600 hover:bg-purple-700' :
+                    analysisType === 'claude-code' ? 'bg-orange-600 hover:bg-orange-700' :
+                    analysisType === 'assets-planner' ? 'bg-teal-600 hover:bg-teal-700' :
+                    analysisType === 'schedule-optimizer' ? 'bg-purple-600 hover:bg-purple-700' :
+                    analysisType === 'preproduction-detail' ? 'bg-teal-600 hover:bg-teal-700' :
                     'bg-green-600 hover:bg-green-700'
                   }`}
                 >
@@ -1747,13 +2376,21 @@ export function AnalysisDashboard({ className = '' }: AnalysisDashboardProps) {
                     <>
                       <RefreshCw className="w-4 h-4 animate-spin" />
                       Analyzing {analysisType === 'budget' ? 'Budget' : 
-                                 analysisType === 'script' ? 'Script' : 'Schedule'}...
+                                 analysisType === 'script' ? 'Script' : 
+                                 analysisType === 'claude-code' ? 'Claude Code' :
+                                 analysisType === 'legal-compliance' ? 'Legal Compliance' :
+                                 analysisType === 'assets-planner' ? 'Assets' :
+                                 analysisType === 'preproduction-detail' ? 'Preproduction Detail' : 'Schedule'}...
                     </>
                   ) : (
                     <>
                       <Play className="w-4 h-4" />
                       Analyze {analysisType === 'budget' ? 'Budget' : 
-                                analysisType === 'script' ? 'Script' : 'Schedule'}
+                                analysisType === 'script' ? 'Script' : 
+                                analysisType === 'claude-code' ? 'Claude Code' :
+                                analysisType === 'legal-compliance' ? 'Legal Compliance' :
+                                analysisType === 'assets-planner' ? 'Assets' :
+                                analysisType === 'preproduction-detail' ? 'Preproduction Detail' : 'Schedule'}
                     </>
                   )}
                 </button>
@@ -1772,7 +2409,11 @@ export function AnalysisDashboard({ className = '' }: AnalysisDashboardProps) {
                     <>
                       <CheckCircle className="w-4 h-4" />
                       Test {analysisType === 'budget' ? 'Budget' : 
-                            analysisType === 'script' ? 'Script' : 'Schedule'} Agents
+                            analysisType === 'script' ? 'Script' : 
+                            analysisType === 'claude-code' ? 'Claude Code' :
+                            analysisType === 'legal-compliance' ? 'Legal Compliance' :
+                            analysisType === 'assets-planner' ? 'Assets' :
+                            analysisType === 'preproduction-detail' ? 'Preproduction Detail' : 'Schedule'} Agents
                     </>
                   )}
                 </button>
@@ -1788,6 +2429,10 @@ export function AnalysisDashboard({ className = '' }: AnalysisDashboardProps) {
                 <p className="text-sm text-gray-500">
                   {analysisType === 'budget' ? 'Budget analysis' : 
                    analysisType === 'script' ? 'Script breakdown' :
+                   analysisType === 'claude-code' ? 'Claude Code script analysis' :
+                   analysisType === 'legal-compliance' ? 'Legal compliance analysis' :
+                   analysisType === 'assets-planner' ? 'Assets planning catalog' :
+                   analysisType === 'preproduction-detail' ? 'Preproduction detail integration' :
                    'Schedule optimization'} and agent test results
                 </p>
               </div>
@@ -1834,14 +2479,63 @@ export function AnalysisDashboard({ className = '' }: AnalysisDashboardProps) {
                       </div>
                     )}
 
+                    {analysisType === 'claude-code' && claudeCodeResult && (
+                      <div>
+                        <ClaudeCodeResults result={claudeCodeResult} onExport={handleExportClaudeCodeAnalysis} />
+                      </div>
+                    )}
+
+                    {analysisType === 'legal-compliance' && legalComplianceResult && (
+                      <div>
+                        <LegalComplianceResults result={legalComplianceResult} onExport={handleExportLegalComplianceAnalysis} />
+                      </div>
+                    )}
+
+                    {analysisType === 'assets-planner' && assetsPlannerResult && (
+                      <div>
+                        <AssetsPlannerResults result={assetsPlannerResult} onExport={handleExportAssetsPlannerAnalysis} />
+                      </div>
+                    )}
+
+                    {analysisType === 'shots-planner' && shotsPlannerResult && (
+                      <div>
+                        <ShotsPlannerResults result={shotsPlannerResult} onExport={handleExportShotsPlannerAnalysis} />
+                      </div>
+                    )}
+
+                    {analysisType === 'preproduction-detail' && preproductionDetailResult && (
+                      <div>
+                        <PreproductionDetailResults result={preproductionDetailResult} onExport={handleExportPreproductionDetailAnalysis} />
+                      </div>
+                    )}
+
+                    {analysisType === 'storyboard-designer' && storyboardDesignerResult && (
+                      <div>
+                        <StoryboardDesignerResults result={storyboardDesignerResult} onExport={handleExportStoryboardDesignerAnalysis} />
+                      </div>
+                    )}
+
+                    {analysisType === 'schedule-optimizer' && scheduleOptimizerResult && (
+                      <div>
+                        <ScheduleOptimizerResults result={scheduleOptimizerResult} onExport={handleExportScheduleOptimizerAnalysis} />
+                      </div>
+                    )}
+
                     {/* Agent Test Results */}
                     {(testResults.length > 0 || orchestratorTest) && (
                       <div>
                         <h4 className="text-lg font-semibold mb-4">Agent Test Results</h4>
-                        <AgentTestResults 
-                          testResults={testResults} 
-                          orchestratorTest={orchestratorTest} 
-                        />
+                        {analysisType === 'claude-code' ? (
+                          <ClaudeCodeTestResults 
+                            testResults={testResults} 
+                            orchestratorTest={orchestratorTest} 
+                          />
+                        ) : (
+                          <AgentTestResults 
+                            testResults={testResults} 
+                            orchestratorTest={orchestratorTest} 
+                          />
+                        )}
                       </div>
                     )}
                   </div>
@@ -2897,6 +3591,159 @@ function BudgetUIDisplay({ result }: { result: BudgetAnalysisResult }) {
   );
 }
 
+// Preproduction Detail Results Display Component
+function PreproductionDetailResults({ result, onExport }: { result: PreproductionDetailAnalysisResult, onExport?: () => void }) {
+  const [showUIView, setShowUIView] = useState(false);
+  const [showRawAPI, setShowRawAPI] = useState(false);
+  const stats = PreproductionDetailDataUtils.getAnalysisStats(result);
+
+  return (
+    <div className="space-y-6">
+      {/* Export and Toggle Buttons */}
+      <div className="flex justify-between items-center">
+        <h4 className="text-lg font-semibold">
+          {showRawAPI ? 'Raw API Response' : showUIView ? 'Preproduction Detail Analysis Details' : 'Analysis Messages'}
+        </h4>
+        <div className="flex gap-2">
+          <button
+            onClick={() => {
+              setShowRawAPI(false);
+              setShowUIView(!showUIView);
+            }}
+            className={`px-5 py-3 ${showUIView && !showRawAPI ? 'bg-gradient-to-r from-emerald-500 to-green-600 hover:from-emerald-600 hover:to-green-700 shadow-lg' : 'bg-gradient-to-r from-purple-500 to-indigo-600 hover:from-purple-600 hover:to-indigo-700 shadow-lg'} text-white rounded-xl transition-all duration-200 flex items-center gap-2 text-sm font-bold border-0`}
+          >
+            <Eye className="w-5 h-5" />
+            {showUIView && !showRawAPI ? 'Show Messages' : 'Show UI View'}
+          </button>
+          <button
+            onClick={() => {
+              setShowUIView(false);
+              setShowRawAPI(!showRawAPI);
+            }}
+            className={`px-5 py-3 ${showRawAPI ? 'bg-gradient-to-r from-red-500 to-pink-600 hover:from-red-600 hover:to-pink-700 shadow-lg' : 'bg-gradient-to-r from-gray-600 to-gray-700 hover:from-gray-700 hover:to-gray-800 shadow-lg'} text-white rounded-xl transition-all duration-200 flex items-center gap-2 text-sm font-bold border-0`}
+          >
+            <Code className="w-5 h-5" />
+            {showRawAPI ? 'Hide Raw API' : 'Show Raw API'}
+          </button>
+          <button
+            onClick={onExport}
+            className="px-5 py-3 bg-gradient-to-r from-blue-500 to-cyan-600 hover:from-blue-600 hover:to-cyan-700 text-white rounded-xl transition-all duration-200 flex items-center gap-2 text-sm font-bold shadow-lg border-0"
+          >
+            <Download className="w-5 h-5" />
+            Export Analysis
+          </button>
+        </div>
+      </div>
+
+      {/* Status Banner */}
+      <div className={`p-4 rounded-lg ${result.success ? 'bg-green-50 border border-green-200' : 'bg-red-50 border border-red-200'}`}>
+        <div className="flex items-center">
+          {result.success ? (
+            <CheckCircle className="w-5 h-5 text-green-500 mr-2" />
+          ) : (
+            <AlertCircle className="w-5 h-5 text-red-500 mr-2" />
+          )}
+          <span className="text-sm font-medium">
+            {result.success ? 'Analysis completed successfully' : 'Analysis failed'}
+          </span>
+          {result.error && (
+            <span className="text-sm text-red-600 ml-2">- {result.error}</span>
+          )}
+        </div>
+      </div>
+
+      {showRawAPI ? (
+        /* Raw API Response View */
+        <div className="bg-gray-900 rounded-lg overflow-hidden">
+          <div className="bg-gray-800 px-4 py-2 border-b border-gray-700">
+            <div className="flex items-center justify-between">
+              <span className="text-gray-300 font-medium">Raw API Response</span>
+            </div>
+          </div>
+          <div className="p-4 max-h-96 overflow-y-auto">
+            <pre className="text-gray-100 text-sm whitespace-pre-wrap font-mono">
+              {JSON.stringify(result, null, 2)}
+            </pre>
+          </div>
+        </div>
+      ) : showUIView ? (
+        /* UI View */
+        <div className="space-y-6">
+          {/* Analysis Summary */}
+          <div className="bg-gradient-to-br from-teal-400 via-cyan-500 to-blue-600 p-6 rounded-2xl shadow-xl border-0">
+            <h6 className="text-xl font-bold text-white mb-4 flex items-center">
+              <Database className="w-6 h-6 text-white mr-3" />
+              Preproduction Detail Analysis Results
+            </h6>
+            
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+              <div className="bg-white/20 backdrop-blur-sm rounded-lg p-3">
+                <div className="text-white/80 text-sm">Messages Generated</div>
+                <div className="text-white text-xl font-bold">{stats.messageCount}</div>
+              </div>
+              
+              <div className="bg-white/20 backdrop-blur-sm rounded-lg p-3">
+                <div className="text-white/80 text-sm">Total Cost</div>
+                <div className="text-white text-xl font-bold">${stats.totalCost.toFixed(4)}</div>
+              </div>
+              
+              <div className="bg-white/20 backdrop-blur-sm rounded-lg p-3">
+                <div className="text-white/80 text-sm">Execution Time</div>
+                <div className="text-white text-xl font-bold">{stats.executionTime}ms</div>
+              </div>
+            </div>
+          </div>
+
+          {/* Formatted Results */}
+          {result.data?.messages && (
+            <div className="bg-white border border-gray-200 rounded-lg overflow-hidden">
+              <div className="bg-gray-50 px-4 py-3 border-b border-gray-200">
+                <h6 className="font-medium text-gray-900">Analysis Output</h6>
+              </div>
+              <div className="p-4">
+                <div className="prose max-w-none">
+                  <div className="text-gray-800 whitespace-pre-wrap">
+                    {PreproductionDetailDataUtils.formatMessages(result.data.messages)}
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+      ) : (
+        /* Messages View */
+        <div className="space-y-4">
+          {result.data?.messages?.map((message, index) => (
+            <div key={index} className="bg-white border border-gray-200 rounded-lg p-4">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-sm font-medium text-gray-600">Message {index + 1}</span>
+                <span className="text-xs text-gray-500">{message.type}</span>
+              </div>
+              <div className="space-y-2">
+                {message.content?.map((block, blockIndex) => 
+                  block.type === "text" && block.text && (
+                    <div key={blockIndex} className="mt-1 text-sm text-gray-700">
+                      <pre className="whitespace-pre-wrap font-mono text-xs bg-gray-50 p-2 rounded border">
+                        {block.text}
+                      </pre>
+                    </div>
+                  )
+                )}
+                {message.totalCostUsd && (
+                  <div className="mt-2 text-xs text-gray-500">
+                    Cost: ${message.totalCostUsd.toFixed(4)}
+                  </div>
+                )}
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+    </div>
+  );
+}
+
 // UI-Friendly Script Display Component - Showing ALL Agents Data Separately
 function ScriptUIDisplay({ result }: { result: ScriptAnalysisResult }) {
   const stages = result.stages || {};
@@ -3875,6 +4722,1177 @@ function ScheduleUIDisplay({ result }: { result: ScheduleAnalysisResult }) {
         </div>
       )}
       
+    </div>
+  );
+}
+
+// Claude Code Results Component
+function ClaudeCodeResults({ result, onExport }: { result: ClaudeCodeAnalysisResult, onExport?: () => void }) {
+  const [showUIView, setShowUIView] = useState(false);
+  const [showRawAPI, setShowRawAPI] = useState(false);
+  const stats = ClaudeCodeDataUtils.getAnalysisStats(result);
+
+  return (
+    <div className="space-y-6">
+      {/* Export and Toggle Buttons */}
+      <div className="flex justify-between items-center">
+        <h4 className="text-lg font-semibold">
+          {showRawAPI ? 'Raw API Response' : showUIView ? 'Claude Code Analysis Details' : 'Analysis Messages'}
+        </h4>
+        <div className="flex gap-2">
+          <button
+            onClick={() => {
+              setShowRawAPI(false);
+              setShowUIView(!showUIView);
+            }}
+            className={`px-5 py-3 ${showUIView && !showRawAPI ? 'bg-gradient-to-r from-emerald-500 to-green-600 hover:from-emerald-600 hover:to-green-700 shadow-lg' : 'bg-gradient-to-r from-purple-500 to-indigo-600 hover:from-purple-600 hover:to-indigo-700 shadow-lg'} text-white rounded-xl transition-all duration-200 flex items-center gap-2 text-sm font-bold border-0`}
+          >
+            <Eye className="w-5 h-5" />
+            {showUIView && !showRawAPI ? 'Show Messages' : 'Show UI View'}
+          </button>
+          <button
+            onClick={() => {
+              setShowUIView(false);
+              setShowRawAPI(!showRawAPI);
+            }}
+            className={`px-5 py-3 ${showRawAPI ? 'bg-gradient-to-r from-red-500 to-pink-600 hover:from-red-600 hover:to-pink-700 shadow-lg' : 'bg-gradient-to-r from-gray-600 to-gray-700 hover:from-gray-700 hover:to-gray-800 shadow-lg'} text-white rounded-xl transition-all duration-200 flex items-center gap-2 text-sm font-bold border-0`}
+          >
+            <Code className="w-5 h-5" />
+            {showRawAPI ? 'Hide Raw API' : 'Show Raw API'}
+          </button>
+          <button
+            onClick={onExport}
+            className="px-5 py-3 bg-gradient-to-r from-blue-500 to-cyan-600 hover:from-blue-600 hover:to-cyan-700 text-white rounded-xl transition-all duration-200 flex items-center gap-2 text-sm font-bold shadow-lg border-0"
+          >
+            <Download className="w-5 h-5" />
+            Export Analysis
+          </button>
+        </div>
+      </div>
+
+      {/* Status Banner */}
+      <div className={`p-4 rounded-lg ${result.success ? 'bg-green-50 border border-green-200' : 'bg-red-50 border border-red-200'}`}>
+        <div className="flex items-center">
+          {result.success ? (
+            <CheckCircle className="w-5 h-5 text-green-500 mr-2" />
+          ) : (
+            <AlertCircle className="w-5 h-5 text-red-500 mr-2" />
+          )}
+          <div>
+            <p className={`font-medium ${result.success ? 'text-green-800' : 'text-red-800'}`}>
+              Claude Code Analysis {result.success ? 'Completed' : 'Failed'}
+            </p>
+            <p className={`text-sm ${result.success ? 'text-green-600' : 'text-red-600'}`}>
+              Messages: {stats.messageCount} | 
+              Cost: ${stats.totalCost.toFixed(4)} | 
+              Processing time: {(stats.executionTime / 1000).toFixed(2)}s
+            </p>
+            {!result.success && result.error && (
+              <p className="text-sm text-red-600 mt-1">Error: {result.error}</p>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* Analysis Content */}
+      {result.success && result.data && (
+        <div className="bg-white border border-gray-200 rounded-lg overflow-hidden">
+          {showRawAPI ? (
+            /* Raw API Response View */
+            <div className="p-6">
+              <div className="bg-gray-900 rounded-lg overflow-hidden">
+                <div className="bg-gray-800 px-4 py-2 border-b border-gray-700">
+                  <div className="flex items-center justify-between">
+                    <span className="text-green-400 font-mono text-sm">📡 API Response JSON</span>
+                    <button
+                      onClick={() => navigator.clipboard.writeText(JSON.stringify(result, null, 2))}
+                      className="text-gray-400 hover:text-white text-xs px-2 py-1 rounded bg-gray-700 hover:bg-gray-600"
+                    >
+                      Copy JSON
+                    </button>
+                  </div>
+                </div>
+                <pre className="text-green-400 p-4 overflow-auto max-h-96 text-xs font-mono leading-relaxed">
+                  {JSON.stringify(result, null, 2)}
+                </pre>
+              </div>
+            </div>
+          ) : showUIView ? (
+            /* UI View - Formatted Display */
+            <div className="p-6">
+              <div className="space-y-6">
+                {/* Analysis Summary */}
+                <div className="bg-gradient-to-br from-orange-400 via-red-500 to-pink-600 p-6 rounded-2xl shadow-xl border-0">
+                  <h6 className="text-xl font-bold text-white mb-4 flex items-center">
+                    <Code className="w-6 h-6 text-white mr-3" />
+                    Claude Code Analysis Results
+                  </h6>
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                    <div className="bg-white/20 backdrop-blur-sm rounded-lg p-3">
+                      <div className="text-white/80 text-sm">Messages Generated</div>
+                      <div className="text-white text-xl font-bold">{stats.messageCount}</div>
+                    </div>
+                    
+                    <div className="bg-white/20 backdrop-blur-sm rounded-lg p-3">
+                      <div className="text-white/80 text-sm">Total Cost</div>
+                      <div className="text-white text-xl font-bold">${stats.totalCost.toFixed(4)}</div>
+                    </div>
+                    
+                    <div className="bg-white/20 backdrop-blur-sm rounded-lg p-3">
+                      <div className="text-white/80 text-sm">Content Length</div>
+                      <div className="text-white text-xl font-bold">{stats.textLength.toLocaleString()} chars</div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Final Result Content */}
+                <div className="space-y-4">
+                  <h5 className="text-lg font-semibold text-gray-900">Final Analysis Result</h5>
+                  <div className="bg-gray-50 rounded-lg p-4 max-h-96 overflow-y-auto">
+                    <div className="whitespace-pre-wrap font-mono text-sm">
+                      {result.data.finalResult || ClaudeCodeDataUtils.formatMessages(result.data.messages)}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          ) : (
+            /* Messages View - Final Result Display */
+            <div className="p-6">
+              <div className="bg-gray-50 rounded-lg p-4 max-h-96 overflow-y-auto">
+                <div className="whitespace-pre-wrap font-mono text-sm">
+                  {result.data.finalResult || ClaudeCodeDataUtils.formatMessages(result.data.messages)}
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+      
+    </div>
+  );
+}
+
+// Shots Planner Results Component
+function ShotsPlannerResults({ result, onExport }: { result: ShotsPlannerAnalysisResult, onExport?: () => void }) {
+  const [showUIView, setShowUIView] = useState(false);
+  const [showRawAPI, setShowRawAPI] = useState(false);
+  const stats = ShotsPlannerDataUtils.getAnalysisStats(result);
+
+  return (
+    <div className="space-y-6">
+      {/* Export and Toggle Buttons */}
+      <div className="flex justify-between items-center">
+        <h4 className="text-lg font-semibold">
+          {showRawAPI ? 'Raw API Response' : showUIView ? 'Shots Planner Analysis Details' : 'Analysis Messages'}
+        </h4>
+        <div className="flex gap-2">
+          <button
+            onClick={() => {
+              setShowRawAPI(false);
+              setShowUIView(!showUIView);
+            }}
+            className={`px-5 py-3 ${showUIView && !showRawAPI ? 'bg-gradient-to-r from-emerald-500 to-green-600 hover:from-emerald-600 hover:to-green-700 shadow-lg' : 'bg-gradient-to-r from-teal-500 to-cyan-600 hover:from-teal-600 hover:to-cyan-700 shadow-lg'} text-white rounded-xl transition-all duration-200 flex items-center gap-2 text-sm font-bold border-0`}
+          >
+            <Eye className="w-5 h-5" />
+            {showUIView && !showRawAPI ? 'Show Messages' : 'Show UI View'}
+          </button>
+          <button
+            onClick={() => {
+              setShowUIView(false);
+              setShowRawAPI(!showRawAPI);
+            }}
+            className={`px-5 py-3 ${showRawAPI ? 'bg-gradient-to-r from-red-500 to-pink-600 hover:from-red-600 hover:to-pink-700 shadow-lg' : 'bg-gradient-to-r from-gray-600 to-gray-700 hover:from-gray-700 hover:to-gray-800 shadow-lg'} text-white rounded-xl transition-all duration-200 flex items-center gap-2 text-sm font-bold border-0`}
+          >
+            <Code className="w-5 h-5" />
+            {showRawAPI ? 'Hide Raw API' : 'Show Raw API'}
+          </button>
+          <button
+            onClick={onExport}
+            className="px-5 py-3 bg-gradient-to-r from-teal-500 to-cyan-600 hover:from-teal-600 hover:to-cyan-700 text-white rounded-xl transition-all duration-200 flex items-center gap-2 text-sm font-bold shadow-lg border-0"
+          >
+            <Download className="w-5 h-5" />
+            Export Analysis
+          </button>
+        </div>
+      </div>
+
+      {/* Status Banner */}
+      <div className={`p-4 rounded-lg ${result.success ? 'bg-green-50 border border-green-200' : 'bg-red-50 border border-red-200'}`}>
+        <div className="flex items-center">
+          {result.success ? (
+            <CheckCircle className="w-5 h-5 text-green-500 mr-2" />
+          ) : (
+            <AlertCircle className="w-5 h-5 text-red-500 mr-2" />
+          )}
+          <div>
+            <p className={`font-medium ${result.success ? 'text-green-800' : 'text-red-800'}`}>
+              Shots Planner Analysis {result.success ? 'Completed' : 'Failed'}
+            </p>
+            <p className={`text-sm ${result.success ? 'text-green-600' : 'text-red-600'}`}>
+              Messages: {stats.messageCount} | 
+              Cost: ${stats.totalCost.toFixed(4)} | 
+              Processing time: {(stats.executionTime / 1000).toFixed(2)}s
+            </p>
+            {!result.success && result.error && (
+              <p className="text-sm text-red-600 mt-1">Error: {result.error}</p>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* Analysis Content */}
+      {result.success && result.data && (
+        <div className="bg-white border border-gray-200 rounded-lg overflow-hidden">
+          {showRawAPI ? (
+            /* Raw API Response View */
+            <div className="p-6">
+              <div className="bg-gray-900 rounded-lg overflow-hidden">
+                <div className="bg-gray-800 px-4 py-2 border-b border-gray-700">
+                  <div className="flex items-center justify-between">
+                    <span className="text-green-400 font-mono text-sm">📡 API Response JSON</span>
+                    <button
+                      onClick={() => navigator.clipboard.writeText(JSON.stringify(result, null, 2))}
+                      className="text-gray-400 hover:text-white text-xs px-2 py-1 rounded bg-gray-700 hover:bg-gray-600"
+                    >
+                      Copy JSON
+                    </button>
+                  </div>
+                </div>
+                <pre className="text-green-400 p-4 overflow-auto max-h-96 text-xs font-mono leading-relaxed">
+                  {JSON.stringify(result, null, 2)}
+                </pre>
+              </div>
+            </div>
+          ) : showUIView ? (
+            /* UI View - Formatted Display */
+            <div className="p-6">
+              <div className="space-y-6">
+                {/* Analysis Summary */}
+                <div className="bg-gradient-to-br from-teal-400 via-cyan-500 to-blue-600 p-6 rounded-2xl shadow-xl border-0">
+                  <h6 className="text-xl font-bold text-white mb-4 flex items-center">
+                    <Target className="w-6 h-6 mr-3" />
+                    Shots Planner Analysis Summary
+                  </h6>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div className="bg-white bg-opacity-20 backdrop-blur-sm rounded-xl p-4 border border-white border-opacity-30">
+                      <div className="text-2xl font-bold text-white">{stats.messageCount}</div>
+                      <div className="text-teal-100 text-sm font-medium">Messages</div>
+                    </div>
+                    <div className="bg-white bg-opacity-20 backdrop-blur-sm rounded-xl p-4 border border-white border-opacity-30">
+                      <div className="text-2xl font-bold text-white">${stats.totalCost.toFixed(4)}</div>
+                      <div className="text-teal-100 text-sm font-medium">Analysis Cost</div>
+                    </div>
+                    <div className="bg-white bg-opacity-20 backdrop-blur-sm rounded-xl p-4 border border-white border-opacity-30">
+                      <div className="text-2xl font-bold text-white">{(stats.executionTime / 1000).toFixed(2)}s</div>
+                      <div className="text-teal-100 text-sm font-medium">Processing Time</div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Shot Planning Results */}
+                <div className="bg-gradient-to-br from-gray-50 to-white p-6 rounded-xl border border-gray-200 shadow-sm">
+                  <h6 className="text-lg font-bold text-gray-800 mb-4 flex items-center">
+                    <Target className="w-5 h-5 mr-2 text-teal-600" />
+                    Shot Planning Details
+                  </h6>
+                  <div className="prose max-w-none">
+                    <p className="text-gray-600 mb-4">
+                      Shot planning analysis completed with detailed coverage patterns and technical specifications.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          ) : (
+            /* Messages View */
+            <div className="p-6">
+              <h6 className="text-lg font-semibold mb-4 text-gray-800">Analysis Messages</h6>
+              <div className="space-y-4 max-h-96 overflow-y-auto">
+                {result.data.messages
+                  .filter(msg => msg.type === "assistant" && msg.content)
+                  .map((message, index) => (
+                    <div key={index} className="bg-gray-50 rounded-lg p-4 border border-gray-200">
+                      <div className="space-y-2">
+                        {message.content
+                          ?.filter(block => block.type === "text" && block.text)
+                          .map((block, blockIndex) => (
+                            <p key={blockIndex} className="text-gray-700 whitespace-pre-wrap leading-relaxed">
+                              {block.text}
+                            </p>
+                          ))}
+                      </div>
+                    </div>
+                  ))}
+              </div>
+              {result.data.finalResult && (
+                <div className="mt-6 p-4 bg-gradient-to-r from-teal-50 to-cyan-50 border border-teal-200 rounded-lg">
+                  <h6 className="font-semibold text-teal-800 mb-2">Final Result:</h6>
+                  <div className="text-teal-700 whitespace-pre-wrap leading-relaxed">
+                    {result.data.finalResult || ShotsPlannerDataUtils.formatMessages(result.data.messages)}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+      )}
+      
+    </div>
+  );
+}
+
+// Legal Compliance Results Component
+function LegalComplianceResults({ result, onExport }: { result: LegalComplianceAnalysisResult, onExport?: () => void }) {
+  const [showUIView, setShowUIView] = useState(false);
+  const [showRawAPI, setShowRawAPI] = useState(false);
+  const stats = LegalComplianceDataUtils.getAnalysisStats(result);
+
+  return (
+    <div className="space-y-6">
+      {/* Export and Toggle Buttons */}
+      <div className="flex justify-between items-center">
+        <h4 className="text-lg font-semibold">
+          {showRawAPI ? 'Raw API Response' : showUIView ? 'Legal Compliance Analysis Details' : 'Analysis Messages'}
+        </h4>
+        <div className="flex gap-2">
+          <button
+            onClick={() => {
+              setShowRawAPI(false);
+              setShowUIView(!showUIView);
+            }}
+            className={`px-5 py-3 ${showUIView && !showRawAPI ? 'bg-gradient-to-r from-emerald-500 to-green-600 hover:from-emerald-600 hover:to-green-700 shadow-lg' : 'bg-gradient-to-r from-purple-500 to-indigo-600 hover:from-purple-600 hover:to-indigo-700 shadow-lg'} text-white rounded-xl transition-all duration-200 flex items-center gap-2 text-sm font-bold border-0`}
+          >
+            <Eye className="w-4 h-4" />
+            {showUIView && !showRawAPI ? 'Show Messages' : 'Show Details'}
+          </button>
+          
+          {onExport && (
+            <button
+              onClick={onExport}
+              className="px-5 py-3 bg-gradient-to-r from-blue-500 to-cyan-600 hover:from-blue-600 hover:to-cyan-700 text-white rounded-xl transition-all duration-200 flex items-center gap-2 text-sm font-bold shadow-lg border-0"
+            >
+              <Download className="w-4 h-4" />
+              Export JSON
+            </button>
+          )}
+        </div>
+      </div>
+
+      {/* Status Indicator */}
+      <div className="bg-gray-50 rounded-lg p-4">
+        <div className="flex items-center">
+          {result.success ? (
+            <CheckCircle className="w-5 h-5 text-green-500 mr-2" />
+          ) : (
+            <AlertCircle className="w-5 h-5 text-red-500 mr-2" />
+          )}
+          <div>
+            <p className={`font-medium ${result.success ? 'text-green-800' : 'text-red-800'}`}>
+              Legal Compliance Analysis {result.success ? 'Completed' : 'Failed'}
+            </p>
+            <p className={`text-sm ${result.success ? 'text-green-600' : 'text-red-600'}`}>
+              Messages: {stats.messageCount} | 
+              Cost: ${stats.totalCost.toFixed(4)} | 
+              Processing time: {(stats.executionTime / 1000).toFixed(2)}s
+            </p>
+            {!result.success && result.error && (
+              <p className="text-sm text-red-600 mt-1">Error: {result.error}</p>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* Content Display */}
+      <div className="bg-white border border-gray-200 rounded-lg">
+        {showRawAPI ? (
+          <div className="p-6">
+            <pre className="bg-gray-800 text-green-400 p-4 rounded-lg overflow-auto text-sm font-mono max-h-96">
+              {JSON.stringify(result, null, 2)}
+            </pre>
+          </div>
+        ) : showUIView ? (
+          <div className="p-6">
+            <div className="space-y-6">
+              <div className="bg-gradient-to-br from-red-400 via-pink-500 to-purple-600 p-6 rounded-2xl shadow-xl border-0">
+                <h6 className="text-xl font-bold text-white mb-4 flex items-center">
+                  <Building className="w-6 h-6 text-white mr-3" />
+                  Legal Compliance Analysis Results
+                </h6>
+                
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                  <div className="bg-white/20 backdrop-blur-sm rounded-lg p-3">
+                    <div className="text-white/80 text-sm">Messages Generated</div>
+                    <div className="text-white text-xl font-bold">{stats.messageCount}</div>
+                  </div>
+                  
+                  <div className="bg-white/20 backdrop-blur-sm rounded-lg p-3">
+                    <div className="text-white/80 text-sm">Total Cost</div>
+                    <div className="text-white text-xl font-bold">${stats.totalCost.toFixed(4)}</div>
+                  </div>
+                  
+                  <div className="bg-white/20 backdrop-blur-sm rounded-lg p-3">
+                    <div className="text-white/80 text-sm">Processing Time</div>
+                    <div className="text-white text-xl font-bold">{(stats.executionTime / 1000).toFixed(1)}s</div>
+                  </div>
+                </div>
+              </div>
+
+              {result.success && result.data && (
+                <div className="bg-gradient-to-br from-red-50 to-pink-50 border border-red-200 rounded-lg p-6">
+                  <h6 className="text-lg font-semibold text-red-800 mb-4 flex items-center">
+                    <Building className="w-5 h-5 text-red-600 mr-2" />
+                    Legal Compliance Requirements
+                  </h6>
+                  <div className="text-sm text-red-700">
+                    <p>Analysis identifies rights clearances, contracts, insurance requirements, and compliance risks.</p>
+                    <p className="mt-2">Review the generated legal_compliance_report.md file for detailed requirements.</p>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        ) : (
+          <div className="p-6">
+            <div className="space-y-4 max-h-96 overflow-y-auto">
+              {result.success && result.data ? (
+                LegalComplianceDataUtils.extractTextFromMessages(result.data.messages).map((text, index) => (
+                  <div key={index} className="p-4 bg-gray-50 rounded-lg border">
+                    <pre className="whitespace-pre-wrap text-sm text-gray-800 font-mono">
+                      {text}
+                    </pre>
+                  </div>
+                ))
+              ) : (
+                <div className="text-center py-8">
+                  <AlertCircle className="w-12 h-12 text-red-400 mx-auto mb-4" />
+                  <p className="text-gray-500">No analysis messages available</p>
+                  {result.error && (
+                    <p className="text-red-600 text-sm mt-2">{result.error}</p>
+                  )}
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// Claude Code Test Results Component
+function ClaudeCodeTestResults({ 
+  testResults, 
+  orchestratorTest 
+}: { 
+  testResults: AgentTestResult[]
+  orchestratorTest: AgentTestResult | null 
+}) {
+  const [showRawAPI, setShowRawAPI] = useState(false);
+  const passedTests = testResults.filter(t => t.passed).length;
+  const totalTests = testResults.length;
+
+  // Combine test results for raw API display
+  const rawTestData = {
+    timestamp: new Date().toISOString(),
+    summary: {
+      totalTests: totalTests,
+      passedTests: passedTests,
+      failedTests: totalTests - passedTests,
+      successRate: totalTests > 0 ? ((passedTests / totalTests) * 100).toFixed(1) + "%" : "0%"
+    },
+    orchestratorTest: orchestratorTest,
+    individualTests: testResults
+  };
+
+  return (
+    <div className="space-y-4">
+      {/* Toggle Button for Raw API */}
+      <div className="flex justify-between items-center">
+        <div className="flex items-center gap-2">
+          <span className="text-sm text-gray-600">Test Results</span>
+          {totalTests > 0 && (
+            <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+              passedTests === totalTests 
+                ? "bg-green-100 text-green-800" 
+                : "bg-yellow-100 text-yellow-800"
+            }`}>
+              {passedTests}/{totalTests} Passed
+            </span>
+          )}
+        </div>
+        <button
+          onClick={() => setShowRawAPI(!showRawAPI)}
+          className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+            showRawAPI 
+              ? "bg-red-500 text-white hover:bg-red-600" 
+              : "bg-gray-600 text-white hover:bg-gray-700"
+          } flex items-center gap-2`}
+        >
+          <Code className="w-4 h-4" />
+          {showRawAPI ? "Hide Raw API" : "Show Raw API"}
+        </button>
+      </div>
+
+      {showRawAPI ? (
+        /* Raw API Response View for Tests */
+        <div className="bg-white border border-gray-200 rounded-lg overflow-hidden">
+          <div className="bg-gray-900 rounded-lg overflow-hidden">
+            <div className="bg-gray-800 px-4 py-2 border-b border-gray-700">
+              <div className="flex items-center justify-between">
+                <span className="text-green-400 font-mono text-sm">🧪 Test Results API Response</span>
+                <button
+                  onClick={() => navigator.clipboard.writeText(JSON.stringify(rawTestData, null, 2))}
+                  className="text-gray-400 hover:text-white text-xs px-2 py-1 rounded bg-gray-700 hover:bg-gray-600"
+                >
+                  Copy JSON
+                </button>
+              </div>
+            </div>
+            <pre className="text-green-400 p-4 overflow-auto max-h-96 text-xs font-mono leading-relaxed">
+              {JSON.stringify(rawTestData, null, 2)}
+            </pre>
+          </div>
+        </div>
+      ) : (
+        /* Standard Test Results Display */
+        <div className="space-y-4">
+          {/* Orchestrator Test */}
+          {orchestratorTest && (
+            <div className={`p-4 rounded-lg ${orchestratorTest.passed ? "bg-green-50 border border-green-200" : "bg-red-50 border border-red-200"}`}>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center">
+                  {orchestratorTest.passed ? (
+                    <CheckCircle className="w-5 h-5 text-green-500 mr-2" />
+                  ) : (
+                    <AlertCircle className="w-5 h-5 text-red-500 mr-2" />
+                  )}
+                  <div>
+                    <p className={`font-medium ${orchestratorTest.passed ? "text-green-800" : "text-red-800"}`}>
+                      {orchestratorTest.agentName}
+                    </p>
+                    {orchestratorTest.response && (
+                      <p className={`text-sm ${orchestratorTest.passed ? "text-green-600" : "text-red-600"}`}>
+                        {orchestratorTest.response}
+                      </p>
+                    )}
+                  </div>
+                </div>
+                <div className="text-sm text-gray-500">
+                  {orchestratorTest.executionTime}ms
+                </div>
+              </div>
+              {orchestratorTest.error && (
+                <p className="mt-2 text-sm text-red-700">{orchestratorTest.error}</p>
+              )}
+            </div>
+          )}
+
+          {/* Individual Agent Tests */}
+          {testResults.length > 0 && (
+            <div>
+              <div className="flex items-center justify-between mb-3">
+                <h5 className="font-medium text-gray-900">Individual Agent Tests</h5>
+                <div className="text-sm text-gray-500">
+                  {passedTests}/{totalTests} passed ({((passedTests / totalTests) * 100).toFixed(0)}%)
+                </div>
+              </div>
+              
+              <div className="space-y-2">
+                {testResults.map((test, index) => (
+                  <div
+                    key={index}
+                    className={`p-3 rounded-md ${test.passed ? "bg-green-50 border border-green-200" : "bg-red-50 border border-red-200"}`}
+                  >
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center">
+                        {test.passed ? (
+                          <CheckCircle className="w-4 h-4 text-green-500 mr-2" />
+                        ) : (
+                          <AlertCircle className="w-4 h-4 text-red-500 mr-2" />
+                        )}
+                        <div>
+                          <p className={`text-sm font-medium ${test.passed ? "text-green-800" : "text-red-800"}`}>
+                            {test.agentName}
+                          </p>
+                          {test.response && (
+                            <p className={`text-xs ${test.passed ? "text-green-600" : "text-red-600"}`}>
+                              {test.response}
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                      <div className="text-xs text-gray-500">
+                        {test.executionTime}ms
+                      </div>
+                    </div>
+                    {test.error && (
+                      <p className="mt-1 text-xs text-red-600">{test.error}</p>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+// Schedule Optimizer Results Component
+function ScheduleOptimizerResults({ result, onExport }: { result: ScheduleOptimizerAnalysisResult, onExport?: () => void }) {
+  const [showUIView, setShowUIView] = useState(false);
+  const [showRawAPI, setShowRawAPI] = useState(false);
+  const stats = ScheduleOptimizerDataUtils.getAnalysisStats(result);
+
+  return (
+    <div className="space-y-6">
+      {/* Export and Toggle Buttons */}
+      <div className="flex justify-between items-center">
+        <h4 className="text-lg font-semibold">
+          {showRawAPI ? 'Raw API Response' : showUIView ? 'Schedule Optimizer Analysis Details' : 'Analysis Messages'}
+        </h4>
+        <div className="flex gap-2">
+          <button
+            onClick={() => {
+              setShowRawAPI(false);
+              setShowUIView(!showUIView);
+            }}
+            className={`px-5 py-3 ${showUIView && !showRawAPI ? 'bg-gradient-to-r from-emerald-500 to-green-600 hover:from-emerald-600 hover:to-green-700 shadow-lg' : 'bg-gradient-to-r from-purple-500 to-indigo-600 hover:from-purple-600 hover:to-indigo-700 shadow-lg'} text-white rounded-xl transition-all duration-200 flex items-center gap-2 text-sm font-bold border-0`}
+          >
+            <Eye className="w-5 h-5" />
+            {showUIView && !showRawAPI ? 'Show Messages' : 'UI View'}
+          </button>
+          <button
+            onClick={() => {
+              setShowUIView(false);
+              setShowRawAPI(!showRawAPI);
+            }}
+            className={`px-5 py-3 ${showRawAPI ? 'bg-gradient-to-r from-emerald-500 to-green-600 hover:from-emerald-600 hover:to-green-700 shadow-lg' : 'bg-gradient-to-r from-gray-600 to-gray-700 hover:from-gray-700 hover:to-gray-800 shadow-lg'} text-white rounded-xl transition-all duration-200 flex items-center gap-2 text-sm font-bold border-0`}
+          >
+            <Code className="w-5 h-5" />
+            {showRawAPI ? 'Hide Raw' : 'Raw API'}
+          </button>
+          {onExport && (
+            <button
+              onClick={onExport}
+              className="px-5 py-3 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white rounded-xl transition-all duration-200 flex items-center gap-2 text-sm font-bold shadow-lg border-0"
+            >
+              <Download className="w-5 h-5" />
+              Export
+            </button>
+          )}
+        </div>
+      </div>
+
+      {/* Status Banner */}
+      <div className={`p-4 rounded-lg ${result.success ? 'bg-green-50 border border-green-200' : 'bg-red-50 border border-red-200'}`}>
+        <div className="flex items-center">
+          {result.success ? (
+            <CheckCircle className="w-5 h-5 text-green-500 mr-2" />
+          ) : (
+            <AlertCircle className="w-5 h-5 text-red-500 mr-2" />
+          )}
+          <div>
+            <p className={`font-medium ${result.success ? 'text-green-800' : 'text-red-800'}`}>
+              Schedule Optimizer Analysis {result.success ? 'Completed' : 'Failed'}
+            </p>
+            <p className={`text-sm ${result.success ? 'text-green-600' : 'text-red-600'}`}>
+              Messages: {stats.messageCount} | 
+              Cost: ${stats.totalCost.toFixed(4)} | 
+              Processing time: {(stats.executionTime / 1000).toFixed(2)}s
+            </p>
+            {!result.success && result.error && (
+              <p className="text-sm text-red-600 mt-1">Error: {result.error}</p>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* Content Display */}
+      <div className="bg-white border border-gray-200 rounded-lg overflow-hidden">
+        <div className="max-h-96 overflow-y-auto">
+          {showRawAPI ? (
+            /* Raw API Response */
+            <div className="p-4">
+              <div className="bg-gray-900 rounded-lg">
+                <pre className="text-green-400 text-xs p-4 overflow-auto whitespace-pre-wrap">
+                  {JSON.stringify(result, null, 2)}
+                </pre>
+              </div>
+            </div>
+          ) : showUIView ? (
+            /* UI View - Formatted Display */
+            <div className="p-6">
+              <div className="space-y-6">
+                {/* Analysis Summary */}
+                <div className="bg-gradient-to-br from-purple-400 via-pink-500 to-red-500 p-6 rounded-2xl shadow-xl border-0">
+                  <h6 className="text-xl font-bold text-white mb-4 flex items-center">
+                    <Calendar className="w-6 h-6 text-white mr-3" />
+                    Schedule Optimizer Analysis Results
+                  </h6>
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                    <div className="bg-white/20 backdrop-blur-sm rounded-lg p-3">
+                      <div className="text-white/80 text-sm">Messages Generated</div>
+                      <div className="text-white text-xl font-bold">{stats.messageCount}</div>
+                    </div>
+                    
+                    <div className="bg-white/20 backdrop-blur-sm rounded-lg p-3">
+                      <div className="text-white/80 text-sm">Total Cost</div>
+                      <div className="text-white text-xl font-bold">${stats.totalCost.toFixed(4)}</div>
+                    </div>
+                    
+                    <div className="bg-white/20 backdrop-blur-sm rounded-lg p-3">
+                      <div className="text-white/80 text-sm">Processing Time</div>
+                      <div className="text-white text-xl font-bold">{(stats.executionTime / 1000).toFixed(2)}s</div>
+                    </div>
+                  </div>
+                  
+                  <div className="bg-white/10 backdrop-blur-sm rounded-lg p-3">
+                    <div className="text-white/80 text-sm">Content Length</div>
+                    <div className="text-white text-lg font-bold">{stats.textLength.toLocaleString()} characters</div>
+                  </div>
+                </div>
+
+                {/* Schedule Optimization Content */}
+                <div className="bg-gray-50 rounded-xl p-6 border border-gray-200">
+                  <h6 className="text-lg font-semibold text-gray-800 mb-4 flex items-center">
+                    <Calendar className="w-5 h-5 text-purple-600 mr-2" />
+                    Generated Schedule Content
+                  </h6>
+                  <div className="prose prose-sm max-w-none text-gray-700">
+                    {ScheduleOptimizerDataUtils.formatMessages(result.data?.messages || []).split('\n').map((line, index) => (
+                      <p key={index} className="mb-2 leading-relaxed">{line}</p>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </div>
+          ) : (
+            /* Default View - Messages */
+            <div className="divide-y divide-gray-200">
+              {result.data?.messages?.map((message, index) => (
+                <div key={index} className="p-4">
+                  <div className="flex items-start space-x-3">
+                    <div className="flex-shrink-0">
+                      <div className="w-8 h-8 bg-purple-100 rounded-full flex items-center justify-center">
+                        <Calendar className="w-4 h-4 text-purple-600" />
+                      </div>
+                    </div>
+                    <div className="flex-1">
+                      <div className="flex items-center justify-between">
+                        <h5 className="text-sm font-medium text-gray-900">Schedule Optimizer</h5>
+                        <span className="text-xs text-gray-500">Step {index + 1}</span>
+                      </div>
+                      {message.content?.map((block, blockIndex) => (
+                        block.type === "text" && block.text && (
+                          <div key={blockIndex} className="mt-1 text-sm text-gray-700">
+                            <pre className="whitespace-pre-wrap font-mono text-xs bg-gray-50 p-2 rounded border">
+                              {block.text}
+                            </pre>
+                          </div>
+                        )
+                      ))}
+                      {message.totalCostUsd && (
+                        <div className="mt-2 text-xs text-gray-500">
+                          Cost: ${message.totalCostUsd.toFixed(4)}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// Storyboard Designer Results Component
+function StoryboardDesignerResults({ result, onExport }: { result: StoryboardDesignerAnalysisResult, onExport?: () => void }) {
+  const [showUIView, setShowUIView] = useState(false);
+  const [showRawAPI, setShowRawAPI] = useState(false);
+  const stats = StoryboardDesignerDataUtils.getAnalysisStats(result);
+
+  return (
+    <div className="space-y-6">
+      {/* Export and Toggle Buttons */}
+      <div className="flex justify-between items-center">
+        <h4 className="text-lg font-semibold">
+          {showRawAPI ? 'Raw API Response' : showUIView ? 'Storyboard Designer Analysis Details' : 'Analysis Messages'}
+        </h4>
+        <div className="flex gap-2">
+          <button
+            onClick={() => {
+              setShowRawAPI(false);
+              setShowUIView(!showUIView);
+            }}
+            className={`px-5 py-3 ${showUIView && !showRawAPI ? 'bg-gradient-to-r from-emerald-500 to-green-600 hover:from-emerald-600 hover:to-green-700 shadow-lg' : 'bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 shadow-lg'} text-white rounded-xl transition-all duration-200 flex items-center gap-2 text-sm font-bold border-0`}
+          >
+            <Eye className="w-5 h-5" />
+            {showUIView && !showRawAPI ? 'Show Raw JSON' : 'Show in UI'}
+          </button>
+          <button
+            onClick={() => {
+              setShowUIView(false);
+              setShowRawAPI(!showRawAPI);
+            }}
+            className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+              showRawAPI 
+                ? "bg-red-500 text-white hover:bg-red-600" 
+                : "bg-gray-600 text-white hover:bg-gray-700"
+            } flex items-center gap-2`}
+          >
+            <Code className="w-4 h-4" />
+            {showRawAPI ? "Hide Raw API" : "Show Raw API"}
+          </button>
+          <button
+            onClick={onExport}
+            className="px-5 py-3 bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white rounded-xl transition-all duration-200 flex items-center gap-2 text-sm font-bold shadow-lg border-0"
+          >
+            <Download className="w-5 h-5" />
+            Export JSON
+          </button>
+        </div>
+      </div>
+
+      {showRawAPI ? (
+        /* Raw API Response */
+        <div className="bg-gray-900 rounded-lg overflow-hidden">
+          <div className="bg-gray-800 px-4 py-2 border-b border-gray-700">
+            <div className="flex items-center justify-between">
+              <span className="text-green-400 font-mono text-sm">🎬 Storyboard Designer API Response</span>
+              <button
+                onClick={() => navigator.clipboard.writeText(JSON.stringify(result, null, 2))}
+                className="text-gray-400 hover:text-white text-xs px-2 py-1 rounded bg-gray-700 hover:bg-gray-600"
+              >
+                Copy JSON
+              </button>
+            </div>
+          </div>
+          <pre className="text-green-400 p-4 overflow-auto max-h-96 text-xs font-mono leading-relaxed">
+            {JSON.stringify(result, null, 2)}
+          </pre>
+        </div>
+      ) : showUIView ? (
+        /* UI View - Show formatted storyboard analysis */
+        <div className="space-y-6">
+          <div className="bg-gradient-to-r from-indigo-50 to-purple-50 p-6 rounded-lg border">
+            <h5 className="text-lg font-semibold mb-4 flex items-center">
+              <Film className="w-5 h-5 text-indigo-600 mr-2" />
+              Storyboard Designer Analysis
+            </h5>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="bg-white p-4 rounded-lg shadow-sm">
+                <p className="text-sm font-medium text-gray-600">Total Cost</p>
+                <p className="text-lg font-bold text-green-600">${stats.totalCost.toFixed(4)}</p>
+              </div>
+              <div className="bg-white p-4 rounded-lg shadow-sm">
+                <p className="text-sm font-medium text-gray-600">Execution Time</p>
+                <p className="text-lg font-bold text-blue-600">{stats.executionTime}ms</p>
+              </div>
+              <div className="bg-white p-4 rounded-lg shadow-sm">
+                <p className="text-sm font-medium text-gray-600">Messages</p>
+                <p className="text-lg font-bold text-purple-600">{stats.messageCount}</p>
+              </div>
+            </div>
+          </div>
+
+          {/* Analysis Messages in formatted UI */}
+          <div className="bg-white border border-gray-200 rounded-lg p-6">
+            <h6 className="text-md font-semibold text-gray-800 mb-4">Visual Planning Analysis</h6>
+            <div className="prose max-w-none">
+              <div className="whitespace-pre-wrap text-sm text-gray-700">
+                {StoryboardDesignerDataUtils.formatMessages(result.data?.messages || [])}
+              </div>
+            </div>
+          </div>
+        </div>
+      ) : (
+        /* Messages View - Show raw messages */
+        <div className="space-y-4">
+          {result.data?.messages?.map((message, index) => {
+            if (message.type === "assistant" && message.content) {
+              return (
+                <div key={index} className="bg-white border border-gray-200 rounded-lg p-4">
+                  <div className="flex items-center mb-2">
+                    <Film className="w-4 h-4 text-indigo-500 mr-2" />
+                    <span className="text-sm font-medium text-gray-600">Storyboard Designer Response #{index + 1}</span>
+                  </div>
+                  <div className="space-y-2">
+                    {message.content.map((block, blockIndex) => {
+                      if (block.type === "text" && block.text) {
+                        return (
+                          <div key={blockIndex} className="text-sm text-gray-700 whitespace-pre-wrap">
+                            {block.text}
+                          </div>
+                        );
+                      }
+                      return null;
+                    })}
+                  </div>
+                </div>
+              );
+            }
+            return null;
+          })}
+        </div>
+      )}
+
+      {/* Analysis Summary */}
+      <div className="bg-indigo-50 p-4 rounded-lg">
+        <h6 className="font-medium text-indigo-800 mb-2">Analysis Summary</h6>
+        <div className="text-sm text-indigo-700">
+          <p>✅ {result.success ? 'Analysis completed successfully' : 'Analysis failed'}</p>
+          <p>💰 Total cost: ${stats.totalCost.toFixed(4)}</p>
+          <p>⏱️ Execution time: {stats.executionTime}ms</p>
+          <p>📝 Generated {stats.messageCount} response messages</p>
+          {result.error && <p className="text-red-600 mt-2">❌ Error: {result.error}</p>}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// Assets Planner Results Component
+function AssetsPlannerResults({ result, onExport }: { result: AssetsPlannerAnalysisResult, onExport?: () => void }) {
+  const [showUIView, setShowUIView] = useState(false);
+  const [showRawAPI, setShowRawAPI] = useState(false);
+  const stats = AssetsPlannerDataUtils.getAnalysisStats(result);
+
+  return (
+    <div className="space-y-6">
+      {/* Export and Toggle Buttons */}
+      <div className="flex justify-between items-center">
+        <h4 className="text-lg font-semibold">
+          {showRawAPI ? 'Raw API Response' : showUIView ? 'Assets Planning Details' : 'Analysis Messages'}
+        </h4>
+        <div className="flex gap-2">
+          <button
+            onClick={() => {
+              setShowRawAPI(false);
+              setShowUIView(!showUIView);
+            }}
+            className={`px-3 py-1 text-sm rounded ${
+              showUIView && !showRawAPI ? 'bg-teal-600 text-white' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+            }`}
+          >
+            📦 Assets View
+          </button>
+          <button
+            onClick={() => {
+              setShowUIView(false);
+              setShowRawAPI(!showRawAPI);
+            }}
+            className={`px-3 py-1 text-sm rounded ${
+              showRawAPI ? 'bg-orange-600 text-white' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+            }`}
+          >
+            🔧 Raw JSON
+          </button>
+          {onExport && (
+            <button
+              onClick={onExport}
+              className="px-3 py-1 text-sm bg-teal-600 text-white rounded hover:bg-teal-700"
+            >
+              <Download className="w-4 h-4 inline mr-1" />
+              Export
+            </button>
+          )}
+        </div>
+      </div>
+
+      {/* Stats Overview */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <div className="bg-teal-50 p-4 rounded-lg">
+          <div className="text-2xl font-bold text-teal-700">{stats.messageCount}</div>
+          <div className="text-sm text-teal-600">Messages</div>
+        </div>
+        <div className="bg-teal-50 p-4 rounded-lg">
+          <div className="text-2xl font-bold text-teal-700">${stats.totalCost.toFixed(4)}</div>
+          <div className="text-sm text-teal-600">Total Cost</div>
+        </div>
+        <div className="bg-teal-50 p-4 rounded-lg">
+          <div className="text-2xl font-bold text-teal-700">{(stats.executionTime / 1000).toFixed(1)}s</div>
+          <div className="text-sm text-teal-600">Duration</div>
+        </div>
+        <div className="bg-teal-50 p-4 rounded-lg">
+          <div className="text-2xl font-bold text-teal-700">{stats.textLength.toLocaleString()}</div>
+          <div className="text-sm text-teal-600">Characters</div>
+        </div>
+      </div>
+
+      {/* Content Display */}
+      <div className="border rounded-lg">
+        {showRawAPI ? (
+          <div className="p-4">
+            <pre className="text-xs bg-gray-100 p-4 rounded overflow-auto max-h-96">
+              {JSON.stringify(result, null, 2)}
+            </pre>
+          </div>
+        ) : showUIView ? (
+          <div className="p-6">
+            <h5 className="text-lg font-semibold mb-4 text-teal-700">Assets Catalog</h5>
+            {result.success && result.data ? (
+              <div className="space-y-6">
+                {/* Extract and display assets from the analysis */}
+                {(() => {
+                  const assets = AssetsPlannerDataUtils.extractAssetsFromAnalysis(result);
+                  const hasAssets = Object.values(assets).some(arr => arr.length > 0);
+                  
+                  if (!hasAssets) {
+                    return (
+                      <div className="text-center py-8">
+                        <Package className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+                        <p className="text-gray-600">No structured assets data found in analysis</p>
+                        <p className="text-sm text-gray-500 mt-2">View the raw messages below for full analysis</p>
+                      </div>
+                    );
+                  }
+
+                  return (
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      {/* Props */}
+                      {assets.props.length > 0 && (
+                        <div className="bg-blue-50 p-4 rounded-lg">
+                          <h6 className="font-semibold text-blue-800 mb-3 flex items-center">
+                            <Package className="w-4 h-4 mr-2" />
+                            Props ({assets.props.length})
+                          </h6>
+                          <ul className="space-y-1 text-sm text-blue-700">
+                            {assets.props.map((prop, index) => (
+                              <li key={index}>• {prop}</li>
+                            ))}
+                          </ul>
+                        </div>
+                      )}
+
+                      {/* Costumes */}
+                      {assets.costumes.length > 0 && (
+                        <div className="bg-purple-50 p-4 rounded-lg">
+                          <h6 className="font-semibold text-purple-800 mb-3 flex items-center">
+                            <Users className="w-4 h-4 mr-2" />
+                            Costumes ({assets.costumes.length})
+                          </h6>
+                          <ul className="space-y-1 text-sm text-purple-700">
+                            {assets.costumes.map((costume, index) => (
+                              <li key={index}>• {costume}</li>
+                            ))}
+                          </ul>
+                        </div>
+                      )}
+
+                      {/* Makeup */}
+                      {assets.makeup.length > 0 && (
+                        <div className="bg-pink-50 p-4 rounded-lg">
+                          <h6 className="font-semibold text-pink-800 mb-3 flex items-center">
+                            <Eye className="w-4 h-4 mr-2" />
+                            Makeup & Prosthetics ({assets.makeup.length})
+                          </h6>
+                          <ul className="space-y-1 text-sm text-pink-700">
+                            {assets.makeup.map((makeup, index) => (
+                              <li key={index}>• {makeup}</li>
+                            ))}
+                          </ul>
+                        </div>
+                      )}
+
+                      {/* Vehicles */}
+                      {assets.vehicles.length > 0 && (
+                        <div className="bg-green-50 p-4 rounded-lg">
+                          <h6 className="font-semibold text-green-800 mb-3 flex items-center">
+                            <Car className="w-4 h-4 mr-2" />
+                            Vehicles ({assets.vehicles.length})
+                          </h6>
+                          <ul className="space-y-1 text-sm text-green-700">
+                            {assets.vehicles.map((vehicle, index) => (
+                              <li key={index}>• {vehicle}</li>
+                            ))}
+                          </ul>
+                        </div>
+                      )}
+
+                      {/* Special Effects */}
+                      {assets.specialEffects.length > 0 && (
+                        <div className="bg-orange-50 p-4 rounded-lg">
+                          <h6 className="font-semibold text-orange-800 mb-3 flex items-center">
+                            <Settings className="w-4 h-4 mr-2" />
+                            Special Effects ({assets.specialEffects.length})
+                          </h6>
+                          <ul className="space-y-1 text-sm text-orange-700">
+                            {assets.specialEffects.map((effect, index) => (
+                              <li key={index}>• {effect}</li>
+                            ))}
+                          </ul>
+                        </div>
+                      )}
+
+                      {/* Locations */}
+                      {assets.locations.length > 0 && (
+                        <div className="bg-red-50 p-4 rounded-lg">
+                          <h6 className="font-semibold text-red-800 mb-3 flex items-center">
+                            <MapPin className="w-4 h-4 mr-2" />
+                            Locations ({assets.locations.length})
+                          </h6>
+                          <ul className="space-y-1 text-sm text-red-700">
+                            {assets.locations.map((location, index) => (
+                              <li key={index}>• {location}</li>
+                            ))}
+                          </ul>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })()}
+              </div>
+            ) : (
+              <div className="text-center py-8">
+                <AlertCircle className="w-16 h-16 text-red-400 mx-auto mb-4" />
+                <p className="text-red-600">Analysis failed or contains no data</p>
+                {result.error && <p className="text-red-500 text-sm mt-2">{result.error}</p>}
+              </div>
+            )}
+          </div>
+        ) : (
+          <div className="p-4">
+            <h5 className="text-lg font-semibold mb-4 text-teal-700">Analysis Messages</h5>
+            <div className="max-h-96 overflow-y-auto bg-gray-50 rounded p-4">
+              {result.success && result.data?.messages ? (
+                <div className="space-y-4">
+                  {AssetsPlannerDataUtils.extractTextFromMessages(result.data.messages).map((text, index) => (
+                    <div key={index} className="bg-white p-3 rounded border-l-4 border-teal-500">
+                      <p className="text-sm whitespace-pre-wrap">{text}</p>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-gray-500 italic">No messages available</p>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* Status Footer */}
+        <div className="px-4 py-3 bg-gray-50 rounded-b-lg border-t">
+          <div className="flex justify-between items-center text-sm">
+            <span className={`px-2 py-1 rounded ${
+              result.success 
+                ? 'bg-green-100 text-green-700' 
+                : 'bg-red-100 text-red-700'
+            }`}>
+              {result.success ? '✅ Success' : '❌ Failed'}
+            </span>
+            <span className="text-gray-500">
+              Timestamp: {new Date(result.timestamp).toLocaleString()}
+            </span>
+          </div>
+          {result.error && <p className="text-red-600 mt-2">❌ Error: {result.error}</p>}
+        </div>
+      </div>
     </div>
   );
 }
